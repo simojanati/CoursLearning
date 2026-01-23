@@ -1,0 +1,226 @@
+/* App-specific tweaks (kept minimal to preserve Sneat design) */
+:root{ --app-brand:#696cff; }
+
+.app-hero{
+  border: 1px solid rgba(105,108,255,.12);
+  background: rgba(105,108,255,.06);
+}
+
+.code-block{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: .9rem;
+  white-space: pre;
+  overflow: auto;
+  padding: 1rem;
+  border-radius: .5rem;
+  border: 1px solid rgba(67,89,113,.2);
+  background: rgba(67,89,113,.04);
+}
+
+.lesson-content img{max-width:100%;height:auto;}
+
+/* Small helper for empty states */
+.empty-state{
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed rgba(67,89,113,.25);
+  border-radius: .75rem;
+}
+
+
+/* i18n + RTL support */
+.rtl { direction: rtl; font-family: "Cairo", "Public Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+.ltr { direction: ltr; }
+
+.rtl .layout-menu { left: auto !important; right: 0 !important; }
+.rtl .layout-page { margin-left: 0 !important; margin-right: 16.25rem !important; }
+
+@media (max-width: 1199.98px){
+  .rtl .layout-page { margin-right: 0 !important; }
+}
+
+/* Swap common spacing utilities (minimal set for our pages) */
+.rtl .ms-auto { margin-left: 0 !important; margin-right: auto !important; }
+.rtl .ms-1 { margin-left: 0 !important; margin-right: .25rem !important; }
+.rtl .me-2 { margin-right: 0 !important; margin-left: .5rem !important; }
+.rtl .me-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+.rtl .text-end { text-align: left !important; }
+
+@media (max-width: 575.98px){
+  .table-responsive { font-size: .95rem; }
+  .list-group-item .btn { white-space: nowrap; }
+}
+
+
+/* RTL FIX v2 */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+/* Place the sidebar on the RIGHT in RTL */
+html[dir="rtl"].layout-menu-fixed .layout-menu,
+html[dir="rtl"].layout-menu-fixed-offcanvas .layout-menu {
+  left: auto !important;
+  right: 0 !important;
+}
+
+/* Shift the page content to the LEFT (padding-right instead of padding-left) */
+@media (min-width: 1200px) {
+  html[dir="rtl"].layout-menu-fixed:not(.layout-menu-collapsed) .layout-page,
+  html[dir="rtl"].layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
+    padding-left: 0 !important;
+    padding-right: 16.25rem !important;
+  }
+}
+
+/* When menu is collapsed, keep spacing on the right */
+@media (min-width: 1200px) {
+  html[dir="rtl"].layout-menu-fixed.layout-menu-collapsed .layout-page,
+  html[dir="rtl"].layout-menu-fixed-offcanvas.layout-menu-collapsed .layout-page {
+    padding-left: 0 !important;
+    padding-right: 5.25rem !important;
+  }
+}
+
+/* Navbar / detached navbar alignment */
+html[dir="rtl"] .layout-navbar {
+  left: 0;
+  right: 0;
+}
+
+/* Menu icon spacing */
+html[dir="rtl"] .menu-icon {
+  margin-right: 0 !important;
+  margin-left: 0.5rem !important;
+}
+
+/* Submenu indentation: flip paddings */
+html[dir="rtl"] .menu-vertical .menu-sub .menu-link {
+  padding-left: 0 !important;
+  padding-right: 2.25rem !important;
+}
+html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-link {
+  padding-left: 0 !important;
+  padding-right: 2.9rem !important;
+}
+html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-sub .menu-link {
+  padding-left: 0 !important;
+  padding-right: 3.55rem !important;
+}
+
+/* Text alignment helpers (Bootstrap) */
+html[dir="rtl"] .text-end {
+  text-align: left !important;
+}
+html[dir="rtl"] .text-start {
+  text-align: right !important;
+}
+
+/* Offcanvas / small screens: ensure menu slides from the right */
+@media (max-width: 1199.98px) {
+  html[dir="rtl"].layout-menu-fixed-offcanvas .layout-menu {
+    right: 0 !important;
+    left: auto !important;
+  }
+  html[dir="rtl"] .layout-page {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+}
+
+
+/* === RTL (Arabic UI) - Sneat layout overrides === */
+html[dir="rtl"] body { font-family: "Cairo", "Public Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+html[dir="rtl"] .layout-menu { left: auto !important; right: 0 !important; }
+html[dir="rtl"] .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page,
+html[dir="rtl"] .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page{
+  padding-left: 0 !important;
+  padding-right: 16.25rem !important;
+}
+
+/* Desktop: if menu is collapsed, keep page aligned */
+html[dir="rtl"].layout-menu-collapsed .layout-page,
+html[dir="rtl"] .layout-menu-collapsed .layout-page{
+  padding-right: 0 !important;
+}
+
+/* Mobile/tablet offcanvas: hidden to the RIGHT by default */
+@media (max-width: 1199.98px){
+  html[dir="rtl"] .layout-menu{
+    left: auto !important;
+    right: 0 !important;
+    transform: translate3d(100%, 0, 0) !important;
+  }
+  html[dir="rtl"].layout-menu-expanded .layout-menu{
+    transform: translate3d(0, 0, 0) !important;
+  }
+  /* Make sure content is full width when menu is hidden */
+  html[dir="rtl"] .layout-page{
+    padding-right: 0 !important;
+  }
+}
+
+/* Utility swaps for RTL */
+html[dir="rtl"] .ms-auto { margin-left: 0 !important; margin-right: auto !important; }
+html[dir="rtl"] .ms-1 { margin-left: 0 !important; margin-right: .25rem !important; }
+html[dir="rtl"] .me-2 { margin-right: 0 !important; margin-left: .5rem !important; }
+html[dir="rtl"] .me-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+html[dir="rtl"] .text-end { text-align: left !important; }
+
+
+
+/* RTL: put the menu toggle (close button) on the LEFT side inside the right-side menu */
+html[dir="rtl"] .layout-menu .app-brand { flex-direction: row-reverse !important; }
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle { margin: 0 !important; }
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle i { transform: rotate(180deg); }
+
+
+
+/* RTL: put menu toggle on the LEFT inside the menu header */
+html[dir="rtl"] .layout-menu .app-brand {
+  flex-direction: row-reverse !important;
+  justify-content: space-between !important;
+}
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle.menu-link {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+
+/* RTL FIX: force menu close/toggle button to the LEFT inside the side menu header */
+html[dir="rtl"] .layout-menu .app-brand {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+html[dir="rtl"] .layout-menu .app-brand .app-brand-link {
+  margin-right: 0 !important;
+  margin-left: auto !important; /* keep brand on the right */
+}
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle {
+  position: absolute !important;
+  left: .75rem !important;
+  right: auto !important;
+  margin: 0 !important;
+}
+html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle i.bx {
+  transform: rotate(180deg);
+}
+
+
+/* small helpers */
+#lessonDoneBadge { vertical-align: middle; }
+
+
+/* Admin-only menu items */
+[data-admin-only]{ display:none; }
+body.admin-mode [data-admin-only]{ display:block; }
+
+
+/* Lesson resources */
+#lessonResources .list-group-item { gap: .5rem; }
+html[dir="rtl"] #lessonResources .text-truncate { text-align: right; }

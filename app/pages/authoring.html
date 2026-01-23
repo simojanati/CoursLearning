@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../../assets/" data-template="vertical-menu-template-free">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Authoring | VBA Eco Academy</title>
+
+  <!-- Sneat core -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
+  <link rel="stylesheet" href="../../assets/vendor/css/core.css" />
+  <link rel="stylesheet" href="../../assets/vendor/css/theme-default.css" />
+  <link rel="stylesheet" href="../../assets/css/demo.css" />
+  <link rel="stylesheet" href="../css/app.css" />
+</head>
+
+<body data-i18n-title="author.title">
+<div class="layout-wrapper layout-content-navbar">
+  <div class="layout-container">
+
+    <!-- Menu -->
+    <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+          <div class="app-brand demo">
+            <a href="home.html" class="app-brand-link">
+              <span class="app-brand-logo demo">
+                <img src="../../assets/img/icons/brands/github.png" alt="logo" style="width:24px; height:24px;" />
+              </span>
+              <span class="app-brand-text demo menu-text fw-bolder ms-2">VBA Eco Academy</span>
+            </a>
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+              <i class="bx bx-chevron-left bx-sm align-middle"></i>
+            </a>
+          </div>
+
+          <div class="menu-inner-shadow"></div>
+
+          <ul class="menu-inner py-1">
+            <li class="menu-item">
+              <a href="home.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                <div data-i18n="menu.home">Home</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a href="courses.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-book"></i>
+                <div data-i18n="menu.courses" data-i18n="courses.title">Courses</div>
+              </a>
+            </li>
+
+            <li class="menu-item">
+              <a href="progress.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                <div data-i18n="menu.progress">Progress</div>
+              </a>
+            </li>
+          
+            <li class="menu-item d-none" data-admin-only>
+              <a href="data-health.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-cog"></i>
+                <div data-i18n="menu.admin">Admin</div>
+              </a>
+            </li>
+
+            <li class="menu-item" data-admin-only>
+              <a href="authoring.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit-alt"></i>
+                <div data-i18n="menu.authoring">Authoring</div>
+              </a>
+            </li>
+
+
+          </ul>
+        </aside>
+
+    <!-- Layout page -->
+    <div class="layout-page">
+      <!-- Navbar -->
+      
+<nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+  <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+    <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+      <i class="bx bx-menu bx-sm"></i>
+    </a>
+  </div>
+  <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+    <div class="navbar-nav align-items-center">
+      <div class="nav-item d-flex align-items-center">
+        <i class="bx bx-edit fs-4 lh-0"></i>
+        <span class="ms-2 fw-semibold" data-i18n="menu.authoring">Authoring</span>
+      </div>
+    </div>
+    
+<ul class="navbar-nav flex-row align-items-center ms-auto">
+
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle hide-arrow" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="bx bx-globe bx-sm"></i>
+    <span class="ms-1" id="langLabel">FR</span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
+    <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
+    <li><a class="dropdown-item" href="#" data-lang="ar">العربية</a></li>
+  </ul>
+</li>
+
+</ul>
+
+  </div>
+</nav>
+
+
+      <!-- Content -->
+      <div class="content-wrapper">
+        <div class="container-xxl flex-grow-1 container-p-y">
+          <h4 class="fw-bold py-3 mb-4" data-i18n="author.title">Authoring tools</h4>
+
+          <div class="row g-4">
+            <div class="col-12 col-xl-7">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6 class="mb-2" data-i18n="author.htmlInput">HTML</h6>
+                  <textarea id="htmlInput" class="form-control" rows="10" placeholder="<div class=&quot;lesson-content&quot;>..."></textarea>
+
+                  <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button class="btn btn-outline-primary" id="btnPreview">
+                      <i class="bx bx-show"></i> <span data-i18n="author.preview">Preview</span>
+                    </button>
+                    <button class="btn btn-outline-success" id="btnSanitize">
+                      <i class="bx bx-shield"></i> <span data-i18n="author.sanitize">Sanitize</span>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="btnCopySanitized">
+                      <i class="bx bx-copy"></i> <span data-i18n="author.copy">Copy</span>
+                    </button>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <h6 class="mb-2" data-i18n="author.validateLesson">Validate lesson row</h6>
+                  <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" data-i18n="author.lessonId">Lesson ID</label>
+                      <input id="validateLessonId" class="form-control" placeholder="l-001" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <button class="btn btn-outline-primary w-100" id="btnValidateLesson">
+                        <i class="bx bx-check-shield"></i> <span data-i18n="author.runValidation">Run validation</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="mt-3">
+                    <div class="text-muted small mb-2" data-i18n="author.validationReport">Report</div>
+                    <div id="validateReport" class="d-flex flex-column gap-2"></div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <h6 class="mb-2" data-i18n="author.template">Template generator</h6>
+
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" data-i18n="author.tTitleFr">Title FR</label>
+                      <input id="tTitleFr" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" data-i18n="author.tTitleEn">Title EN</label>
+                      <input id="tTitleEn" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" data-i18n="author.objectives">Objectives</label>
+                      <textarea id="tObjectives" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" data-i18n="author.steps">Steps</label>
+                      <textarea id="tSteps" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" data-i18n="author.code">Code</label>
+                      <textarea id="tCode" class="form-control" rows="5" placeholder="Sub Example()..."></textarea>
+                    </div>
+                    <div class="col-12">
+                      <button class="btn btn-primary" id="btnGenerate">
+                        <i class="bx bx-wand"></i> <span data-i18n="author.generate">Generate</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <label class="form-label" data-i18n="author.outputFr">contentHtml_fr</label>
+                    <textarea id="outFr" class="form-control" rows="6" readonly></textarea>
+                    <div class="mt-2">
+                      <button class="btn btn-sm btn-outline-secondary" data-copy="#outFr"><i class="bx bx-copy"></i> <span data-i18n="author.copy">Copy</span></button>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <label class="form-label" data-i18n="author.outputEn">contentHtml_en</label>
+                    <textarea id="outEn" class="form-control" rows="6" readonly></textarea>
+                    <div class="mt-2">
+                      <button class="btn btn-sm btn-outline-secondary" data-copy="#outEn"><i class="bx bx-copy"></i> <span data-i18n="author.copy">Copy</span></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-xl-5">
+              <div class="card mb-4">
+                <div class="card-body">
+                  <h6 class="mb-2" data-i18n="author.preview">Preview</h6>
+                  <div class="border rounded p-2" style="min-height:320px; background:#fff">
+                    <iframe id="previewFrame" style="width:100%;min-height:300px;border:0"></iframe>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="mb-2" data-i18n="author.resourcesBuilder">Resources builder</h6>
+                  <div class="text-muted small mb-3" data-i18n="author.resourcesHint">Format hint</div>
+
+                  <div id="resRows" class="d-flex flex-column gap-2"></div>
+                  <button class="btn btn-sm btn-outline-primary mt-2" id="btnAddRow">
+                    <i class="bx bx-plus"></i> <span data-i18n="author.addRow">Add</span>
+                  </button>
+
+                  <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnExportPipe"><span data-i18n="author.exportPipe">Export (pipe)</span></button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnExportJson"><span data-i18n="author.exportJson">Export (JSON)</span></button>
+                  </div>
+
+                  <div class="mt-3">
+                    <textarea id="resOutput" class="form-control" rows="5" readonly></textarea>
+                    <div class="mt-2">
+                      <button class="btn btn-sm btn-outline-secondary" data-copy="#resOutput"><i class="bx bx-copy"></i> <span data-i18n="author.copy">Copy</span></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+        <div class="content-backdrop fade"></div>
+      </div>
+      <!-- / Content -->
+    </div>
+    <!-- / Layout page -->
+  </div>
+
+  <div class="layout-overlay layout-menu-toggle"></div>
+</div>
+
+<script src="../../assets/vendor/libs/jquery/jquery.js"></script>
+<script src="../../assets/vendor/libs/popper/popper.js"></script>
+<script src="../../assets/vendor/js/bootstrap.js"></script>
+<script src="../../assets/vendor/js/menu.js"></script>
+
+<script type="module" src="../js/authoring.js"></script>
+</body>
+</html>
