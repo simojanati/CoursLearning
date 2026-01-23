@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://YOUR_GITHUB_PAGES_URL/</loc></url>
-  <url><loc>https://YOUR_GITHUB_PAGES_URL/app/pages/home.html</loc></url>
-  <url><loc>https://YOUR_GITHUB_PAGES_URL/app/pages/courses.html</loc></url>
-  <url><loc>https://YOUR_GITHUB_PAGES_URL/app/pages/progress.html</loc></url>
+  <url><loc>https://simojanati.github.io/CoursLearning/</loc></url>
+  <url><loc>https://simojanati.github.io/CoursLearning/app/pages/home.html</loc></url>
+  <url><loc>https://simojanati.github.io/CoursLearning/app/pages/courses.html</loc></url>
+  <url><loc>https://simojanati.github.io/CoursLearning/app/pages/progress.html</loc></url>
 </urlset>

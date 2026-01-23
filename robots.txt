@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://YOUR_GITHUB_PAGES_URL/sitemap.xml
+Sitemap: https://simojanati.github.io/CoursLearning/sitemap.xml
