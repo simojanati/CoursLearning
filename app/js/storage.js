@@ -1,10 +1,11 @@
-const NS = "vbaEco";
+const NS = "learnHub";
+const OLD_NS = "vbaEco";
 
 function key(k){ return `${NS}:${k}`; }
 
 export function loadJSON(k, fallback=null){
   try {
-    const v = localStorage.getItem(key(k));
+    const v = localStorage.getItem(key(k)) || localStorage.getItem(`${OLD_NS}:${k}`);
     if (!v) return fallback;
     return JSON.parse(v);
   } catch {
@@ -99,5 +100,27 @@ export function getBestQuizScore(lessonId){
   const all = loadJSON("quizResults", {});
   const r = all[String(lessonId)];
   return r && typeof r.score === "number" ? r.score : null;
+}
+
+
+
+// --- AI chat (per-lesson) ---
+export function loadAiChat(lessonId){
+  return loadJSON(`aiChat:${lessonId}`, []);
+}
+export function saveAiChat(lessonId, messages){
+  saveJSON(`aiChat:${lessonId}`, Array.isArray(messages)?messages:[]);
+}
+export function clearAiChat(lessonId){
+  saveJSON(`aiChat:${lessonId}`, []);
+}
+
+// --- AI scope (per-lesson) ---
+export function loadAiScope(lessonId){
+  const v = loadJSON(`aiScope:${lessonId}`, null);
+  return (v === null || v === undefined) ? false : Boolean(v);
+}
+export function saveAiScope(lessonId, allowGeneral){
+  saveJSON(`aiScope:${lessonId}`, Boolean(allowGeneral));
 }
 

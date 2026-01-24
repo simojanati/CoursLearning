@@ -7,7 +7,7 @@
     <script>
       (function () {
         try {
-          var lang = (localStorage.getItem('vbaEco:lang') || localStorage.getItem('lang') || 'fr');
+          var lang = (localStorage.getItem('learnHub:lang') || localStorage.getItem('learnHub:lang') || localStorage.getItem('vbaEco:lang') || localStorage.getItem('lang') || 'fr');
           if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
           document.documentElement.lang = lang;
           document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -15,11 +15,11 @@
       })();
     </script>
 
-    <title>VBA Eco Academy</title>
-    <meta name="description" content="Plateforme e-learning pour apprendre VBA (économie). Cours & quiz bilingues FR/EN, interface FR/EN/AR, données via Google Sheets." />
+    <title>LearnHub — E-learning platform</title>
+    <meta name="description" content="LearnHub — plateforme e-learning: cours, leçons, quiz et assistant IA. UI FR/EN/AR. Contenu via Google Sheets (Apps Script)." />
 
-    <meta property="og:title" content="VBA Eco Academy" />
-    <meta property="og:description" content="Cours & quiz VBA (FR/EN) — UI FR/EN/AR • Google Sheets • Progression" />
+    <meta property="og:title" content="LearnHub" />
+    <meta property="og:description" content="LearnHub — cours, leçons, quiz et assistant IA (FR/EN/AR). Contenu via Google Sheets." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="assets/img/og.png" />
 
@@ -50,7 +50,7 @@
       <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="#">
           <span class="badge bg-primary"><i class="bx bx-code-alt"></i></span>
-          <span class="fw-bold">VBA Eco Academy</span>
+          <span class="fw-bold">LearnHub</span>
         </a>
 
         <div class="d-flex align-items-center gap-2 ms-auto">
@@ -75,7 +75,7 @@
     <main class="container landing-hero">
       <div class="row align-items-center g-4">
         <div class="col-12 col-lg-7">
-          <h1 class="display-6 fw-bold mb-3" data-i18n="landing.heroTitle">Apprendre VBA pour l’économie</h1>
+          <h1 class="display-6 fw-bold mb-3" data-i18n="landing.heroTitle">Apprendre. Pratiquer. Progresser.</h1>
           <p class="text-muted fs-5 mb-4" data-i18n="landing.heroSubtitle">
             Une plateforme e-learning (FR/EN) avec UI FR/EN/AR, basée sur Google Sheets. Progresse avec des leçons et des quiz.
           </p>

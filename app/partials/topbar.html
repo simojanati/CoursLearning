@@ -1,0 +1,40 @@
+<!-- LearnHub shared topbar (injected on all pages) -->
+<nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+  <!-- Mobile menu toggler -->
+  <div class="navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+    <!-- IMPORTANT: the clickable element itself must carry layout-menu-toggle for Sneat Helpers -->
+    <a href="javascript:void(0)" class="nav-item nav-link px-0 me-xl-4 layout-menu-toggle menu-link" aria-label="Menu">
+      <i class="bx bx-menu bx-sm"></i>
+    </a>
+  </div>
+
+  <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+    <!-- Search (optional per page) -->
+    <div class="navbar-nav align-items-center lh-topbar-search">
+      <div class="nav-item d-flex align-items-center">
+        <i class="bx bx-search fs-4 lh-0"></i>
+        <input id="lhTopSearch" type="text" class="form-control border-0 shadow-none" placeholder="Search…" data-i18n-placeholder="topbar.search" aria-label="Search" />
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <ul class="navbar-nav flex-row align-items-center ms-auto lh-topbar-actions">
+      <li class="nav-item dropdown lh-lang-item">
+        <a class="nav-link dropdown-toggle hide-arrow" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bx bx-globe bx-sm"></i>
+          <span class="ms-1" id="langLabel">FR</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end lang-dropdown-menu">
+          <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
+          <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
+          <li><a class="dropdown-item" href="#" data-lang="ar">العربية</a></li>
+        </ul>
+      </li>
+      <li class="nav-item lh-profile-item">
+        <a class="nav-link" href="javascript:void(0)" aria-label="Profile">
+          <span class="lh-profile-placeholder"><i class="bx bx-user-circle bx-sm"></i></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>

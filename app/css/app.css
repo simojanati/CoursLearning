@@ -224,3 +224,169 @@ body.admin-mode [data-admin-only]{ display:block; }
 /* Lesson resources */
 #lessonResources .list-group-item { gap: .5rem; }
 html[dir="rtl"] #lessonResources .text-truncate { text-align: right; }
+
+
+
+/* --- AI Assistant (Lesson) --- */
+.ai-chat { display:flex; flex-direction:column; gap:.75rem; }
+.ai-chat-toolbar { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+.ai-chat-messages { border:1px solid rgba(67,89,113,.2); border-radius:.5rem; padding:.75rem; max-height: 340px; overflow:auto; background: rgba(67,89,113,.02); }
+.ai-msg { display:flex; gap:.5rem; margin-bottom:.65rem; }
+.ai-msg:last-child { margin-bottom:0; }
+.ai-msg .ai-bubble { padding:.55rem .7rem; border-radius:.65rem; max-width: 100%; white-space: pre-wrap; word-break: break-word; }
+.ai-msg.user { justify-content:flex-end; }
+.ai-msg.user .ai-bubble { background: rgba(105,108,255,.12); border:1px solid rgba(105,108,255,.25); }
+.ai-msg.assistant .ai-bubble { background: #fff; border:1px solid rgba(67,89,113,.18); }
+.ai-msg .ai-meta { font-size:.72rem; opacity:.65; margin-top:.15rem; }
+.ai-chat-status { font-size:.85rem; }
+html[dir="rtl"] .ai-chat-toolbar { flex-direction: row-reverse; }
+html[dir="rtl"] .ai-msg.user { justify-content:flex-start; }
+
+/* --- Navbar language dropdown + static profile placeholder --- */
+.lh-profile-placeholder{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(67, 89, 113, 0.08);
+  border: 1px solid rgba(67, 89, 113, 0.12);
+}
+
+.navbar-nav.flex-row{ column-gap: .25rem; }
+
+/* --- RTL navbar fixes (AR) ---
+   Goal:
+   - Search input stays on the FAR RIGHT of the topbar
+   - Profile icon goes to the FAR LEFT
+   - Language button sits just to the RIGHT of profile
+   - Dropdown opens inward (to the right), never off-screen
+*/
+html[dir="rtl"] #layout-navbar #navbar-collapse{
+  width: 100%;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+}
+
+/* Make the action group (lang/profile) the left block, and search the right block */
+html[dir="rtl"] #layout-navbar #navbar-collapse > ul.navbar-nav{
+  order: 1;
+  margin-left: 0 !important;
+}
+html[dir="rtl"] #layout-navbar #navbar-collapse > .navbar-nav.align-items-center{
+  order: 2;
+  margin-right: 0 !important;
+}
+
+/* Inside the action group: Profile far-left, Language to its right */
+/* RTL navbar actions order: Language then Profile (leftmost) */
+html[dir="rtl"] .lh-lang-item{ order: 1; }
+html[dir="rtl"] .lh-profile-item{ order: 2; }
+
+/* In RTL, force the language dropdown to open inward (to the right) */
+html[dir="rtl"] .lang-dropdown-menu{
+  left: 0 !important;
+  right: auto !important;
+}
+
+
+/* Global loader overlay */
+#lhGlobalLoader.lh-loader{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.55);
+  z-index: 2000;
+  backdrop-filter: blur(1px);
+}
+body.lh-loading{ overflow: hidden; }
+
+/* --- Responsive tables -> cards on mobile ---
+   Any <table> enhanced by ui.js receives .lh-table-cards.
+   On small screens, we render each row as a card and print header labels
+   using td::before (from data-label).
+*/
+
+@media (max-width: 768px){
+  .lh-table-responsive-cards{ overflow-x: visible !important; }
+
+  table.lh-table-cards{ border: 0; }
+  table.lh-table-cards thead{ display:none; }
+  table.lh-table-cards tbody{ display:block; }
+  table.lh-table-cards tbody tr{
+    display:block;
+    margin: 0 0 .75rem 0;
+    padding: .75rem .85rem;
+    border: 1px solid rgba(67, 89, 113, 0.16);
+    border-radius: .75rem;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(67, 89, 113, 0.06);
+  }
+
+  table.lh-table-cards tbody td,
+  table.lh-table-cards tbody th{
+    /* Stack label above value to avoid horizontal stretching on mobile */
+    display:block;
+    padding: .35rem 0;
+    border: 0 !important;
+    /* Override .text-nowrap wrappers in the template */
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  table.lh-table-cards tbody td::before,
+  table.lh-table-cards tbody th::before{
+    content: attr(data-label);
+    font-weight: 600;
+    color: rgba(67, 89, 113, 0.85);
+    display:block;
+    margin-bottom: .15rem;
+    max-width: 100%;
+  }
+
+  /* Actions column: show buttons together and always visible */
+  table.lh-table-cards tbody td.lh-td-actions,
+  table.lh-table-cards tbody th.lh-td-actions{
+    display:flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .35rem;
+    padding-top: .65rem;
+    border-top: 1px dashed rgba(67, 89, 113, 0.18) !important;
+  }
+  table.lh-table-cards tbody td.lh-td-actions::before,
+  table.lh-table-cards tbody th.lh-td-actions::before{
+    content: "";
+    display:none;
+  }
+
+  /* RTL: keep label/value spacing natural */
+  /* RTL: labels/values are stacked, keep actions aligned nicely */
+  html[dir="rtl"] table.lh-table-cards tbody td.lh-td-actions,
+  html[dir="rtl"] table.lh-table-cards tbody th.lh-td-actions{
+    justify-content: flex-start;
+  }
+}
+
+/* Generic helper to wrap long texts (course descriptions, lesson titles, etc.) */
+.lh-wrap{
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* --- AI Assistant Drawer --- */
+.lh-ai-drawer{ width:min(520px, 92vw); }
+.lh-ai-drawer .ai-chat-messages{ max-height: 52vh; }
+.lh-ai-drawer .offcanvas-body{ display:flex; flex-direction:column; }
+.lh-ai-drawer .ai-chat{ flex:1 1 auto; }
+@media (max-width: 576px){
+  .lh-ai-drawer{ width: 100vw; }
+  .lh-ai-drawer .ai-chat-messages{ max-height: 50vh; }
+}

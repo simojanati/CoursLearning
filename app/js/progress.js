@@ -1,6 +1,7 @@
 import './admin-mode.js';
 import { initI18n, t } from './i18n.js';
 import { loadJSON, saveJSON, getLang, setLang } from './storage.js';
+import { ensureTopbar } from './layout.js';
 
 const KEYS = ['recentLessons','completedLessons','quizResults','adminMode'];
 
@@ -100,7 +101,8 @@ function resetProgress(){
 }
 
 async function init(){
-  initI18n();
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
 
   const exportBtn = document.getElementById('exportBtn');
   const importBtn = document.getElementById('importBtn');

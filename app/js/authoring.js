@@ -3,6 +3,7 @@ import { initI18n, t, pickField } from './i18n.js';
 import { qs, escapeHTML } from './ui.js';
 import { sanitizeHtml, buildLessonHtml } from './authoring-tools.js';
 import { getLesson, getQuizByLesson } from './api.js';
+import { ensureTopbar } from './layout.js';
 
 function copyFrom(selector){
   const el = document.querySelector(selector);
@@ -233,8 +234,9 @@ async function validateLessonRow(lessonId){
   out.innerHTML = items.join('');
 }
 
-function init(){
-  initI18n();
+async function init(){
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
 
   const htmlInput = qs('#htmlInput');
   const btnPreview = qs('#btnPreview');

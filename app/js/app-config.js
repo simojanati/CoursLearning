@@ -4,7 +4,17 @@
 export const DEFAULT_LANG = 'fr';
 export const SUPPORTED_LANGS = ['fr','en','ar'];
 
-export const API_BASE_URL = "https://script.google.com/macros/s/AKfycbwCBnuukMkv8rabEnI8-LESY-au2Ynlqq4g6kLHxEWJ9A9_XJyiup3DwvtZezk8ICY0JQ/exec";
+// Allow overriding endpoints without rebuilding (stored in localStorage)
+function _ls(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return (v && v.trim().length) ? v.trim() : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export const API_BASE_URL = _ls("API_BASE_URL", "https://script.google.com/macros/s/AKfycby9v1vuHrSY8F1e29ErufYQZ6mFEppGX7gW_c_a_FSC-e8HWJUVgVnvSt-uqvhJG362qg/exec");
 
 
 // 1-bis) Google Sheet ID (the long ID in the Sheet URL)
@@ -14,6 +24,16 @@ export const USE_MOCK_DATA = API_BASE_URL.trim().length === 0;
 
 // App branding (used in a couple of UI spots)
 export const BRAND = {
-  name: "VBA Eco Academy",
-  shortName: "VBA Eco",
+  name: "LearnHub",
+  shortName: "LearnHub",
 };
+
+
+// AI Proxy Apps Script Web App URL (separate deployment that is allowed to call external APIs)
+// Example: https://script.google.com/macros/s/AKfycb.../exec
+export const AI_API_BASE_URL = _ls("AI_API_BASE_URL", "https://script.google.com/macros/s/AKfycbx1snStnxyBdOaClJajmKTNcdV-uv3a7JJuwHLnPqzhbNzgkVIA1_PzKBghbtfi47_j/exec");
+
+// AI Assistant (optional)
+export const AI_ENABLED = true;
+export const AI_MAX_INPUT_CHARS = 1500;
+export const AI_DEFAULT_MODE = 'explain';

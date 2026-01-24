@@ -7,7 +7,7 @@
   <script>
     (function () {
       try {
-        var lang = (localStorage.getItem('vbaEco:lang') || localStorage.getItem('lang') || 'fr');
+        var lang = (localStorage.getItem('learnHub:lang') || localStorage.getItem('learnHub:lang') || localStorage.getItem('lang') || 'fr');
         if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
         document.documentElement.lang = lang;
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -18,7 +18,7 @@
       } catch (e) {}
     })();
   </script>
-<title>Lesson | VBA Eco Academy</title>
+<title>Lesson | LearnHub</title>
     <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -44,9 +44,9 @@
           <div class="app-brand demo">
             <a href="home.html" class="app-brand-link">
               <span class="app-brand-logo demo">
-                <img src="../../assets/img/icons/brands/github.png" alt="logo" style="width:24px; height:24px;" />
+                <img src="../../assets/img/brand/icon.png" alt="LearnHub" style="width:24px; height:24px;" />
               </span>
-              <span class="app-brand-text demo menu-text fw-bolder ms-2">VBA Eco Academy</span>
+              <span class="app-brand-text demo menu-text fw-bolder ms-2">LearnHub</span>
             </a>
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
               <i class="bx bx-chevron-left bx-sm align-middle"></i>
@@ -95,44 +95,34 @@
         </aside>
 
         <div class="layout-page">
-          <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
-            <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-              <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
-                <i class="bx bx-menu bx-sm"></i>
-              </a>
-            </div>
-            <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-              <ul class="navbar-nav flex-row align-items-center ms-auto">
-
-                <li class="nav-item dropdown me-3">
-                  <a class="nav-link dropdown-toggle hide-arrow" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bx bx-globe bx-sm"></i>
-                    <span class="ms-1" id="langLabel">FR</span>
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
-                    <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
-                    <li><a class="dropdown-item" href="#" data-lang="ar">العربية</a></li>
-                  </ul>
-                </li>
-
-                <li class="nav-item me-2">
-                  <a id="videoBtn" class="btn btn-sm btn-outline-primary d-none" target="_blank" href="#"><i class="bx bx-play"></i> <span data-i18n="lesson.video">Video</span></a>
-                </li>
-                <li class="nav-item me-2">
-                  <a id="filesBtn" class="btn btn-sm btn-outline-primary d-none" target="_blank" href="#"><i class="bx bx-download"></i> <span data-i18n="lesson.files">Files</span></a>
-                </li>
-                <li class="nav-item">
-                  <a id="quizCta" class="btn btn-sm btn-primary disabled" href="#"><i class="bx bx-check-circle"></i> <span data-i18n="lesson.quiz">Quiz</span></a>
-                </li>
-              </ul>
-            </div>
-          </nav>
+          <div id="lhTopbar"></div>
 
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
               <div class="card mb-3">
                 <div class="card-body">
+  <nav aria-label="breadcrumb" class="mb-2" id="breadcrumbs" style="display:none;">
+    <ol class="breadcrumb mb-0" id="breadcrumbList"></ol>
+  </nav>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2" id="lessonNavRow" style="display:none;">
+    <a class="btn btn-sm btn-outline-primary" id="backToCourseBtn" href="courses.html">
+      <i class="bx bx-left-arrow-alt"></i> <span data-i18n="lesson.backToCourse">Back to course</span>
+    </a>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-secondary" id="prevLessonBtn" href="#"><i class="bx bx-chevron-left"></i> <span data-i18n="actions.previous">Previous</span></a>
+      <a class="btn btn-sm btn-outline-secondary" id="nextLessonBtn" href="#"><span data-i18n="actions.next">Next</span> <i class="bx bx-chevron-right"></i></a>
+    </div>
+  </div>
+
+  <!-- Page actions moved from topbar to content (keeps topbar identical on all pages) -->
+  <div class="d-flex flex-wrap gap-2 justify-content-end mb-3" id="lessonActionBar">
+    <a id="videoBtn" class="btn btn-sm btn-outline-primary d-none" target="_blank" href="#"><i class="bx bx-play"></i> <span data-i18n="lesson.video">Video</span></a>
+    <a id="filesBtn" class="btn btn-sm btn-outline-primary d-none" target="_blank" href="#"><i class="bx bx-download"></i> <span data-i18n="lesson.files">Files</span></a>
+    <button id="aiBtn" class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#aiOffcanvas" aria-controls="aiOffcanvas"><i class="bx bx-bot"></i> <span data-i18n="ai.button">AI</span></button>
+    <a id="quizCta" class="btn btn-sm btn-primary disabled" href="#"><i class="bx bx-check-circle"></i> <span data-i18n="lesson.quiz">Quiz</span></a>
+  </div>
+
+
                   <h4 class="mb-1 d-flex align-items-center flex-wrap gap-2">
                     <span id="lessonTitle">Lesson</span>
                     <span class="badge bg-label-success d-none" id="lessonDoneBadge" data-i18n="lesson.completed">Done</span>
@@ -150,8 +140,9 @@
                   <div id="lessonContent"></div>
                 </div>
               </div>
+          </div>
 
-          <div class="card mb-4">
+<div class="card mb-4">
             <div class="card-body">
               <h6 class="mb-3" data-i18n="lesson.media">Video</h6>
               <div id="lessonMedia" class="ratio ratio-16x9 d-none"></div>
@@ -171,7 +162,7 @@
 
             <footer class="content-footer footer bg-footer-theme">
               <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> VBA Eco Academy</div>
+                <div class="mb-2 mb-md-0">© 2026 LearnHub. All rights reserved.</div>
                 <div><span class="text-muted">Lesson</span></div>
               </div>
             </footer>
@@ -181,6 +172,59 @@
         </div>
       </div>
       <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+
+    <!-- AI Assistant Drawer -->
+    <div class="offcanvas offcanvas-end lh-ai-drawer" tabindex="-1" id="aiOffcanvas" aria-labelledby="aiOffcanvasLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="aiOffcanvasLabel">
+          <span data-i18n="ai.title">Assistant IA</span>
+          <span id="aiLessonTag" class="text-muted small"></span>
+        </h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+          <span id="aiStatus" class="ai-chat-status text-muted"></span>
+          <button id="aiClearBtn" class="btn btn-sm btn-outline-secondary" type="button">
+            <i class="bx bx-trash"></i> <span data-i18n="ai.clear">Effacer</span>
+          </button>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mb-2">
+          <button id="aiQuickSummary" class="btn btn-sm btn-outline-primary" type="button" data-i18n="ai.quick.summary">Summary</button>
+          <button id="aiQuickSimple" class="btn btn-sm btn-outline-primary" type="button" data-i18n="ai.quick.simple">Explain simply</button>
+          <button id="aiQuickQuestions" class="btn btn-sm btn-outline-primary" type="button" data-i18n="ai.quick.questions">Questions</button>
+        </div>
+
+        <div class="ai-chat">
+          <div class="ai-chat-toolbar">
+            <label class="form-label mb-0 me-1" data-i18n="ai.mode">Mode</label>
+            <select id="aiMode" class="form-select form-select-sm" style="max-width:180px">
+              <option value="explain" data-i18n="ai.mode.explain">Expliquer</option>
+              <option value="examples" data-i18n="ai.mode.examples">Exemples</option>
+              <option value="exercises" data-i18n="ai.mode.exercises">Exercices</option>
+              <option value="quiz" data-i18n="ai.mode.quiz">Mini-quiz</option>
+              <option value="review" data-i18n="ai.mode.review">Correction</option>
+            </select>
+
+            <div class="form-check form-switch ms-auto">
+              <input class="form-check-input" type="checkbox" id="aiScopeToggle">
+              <label class="form-check-label" for="aiScopeToggle" data-i18n="ai.scope">Outside lesson</label>
+            </div>
+          </div>
+
+          <div id="aiMessages" class="ai-chat-messages"></div>
+
+          <div class="d-flex gap-2 align-items-start flex-wrap">
+            <textarea id="aiInput" class="form-control" rows="3" placeholder=""></textarea>
+            <button id="aiSendBtn" class="btn btn-primary" type="button">
+              <i class="bx bx-send"></i> <span data-i18n="ai.send">Envoyer</span>
+            </button>
+          </div>
+          <div class="text-muted small" id="aiHint"></div>
+        </div>
+      </div>
     </div>
 
     <script src="../../assets/vendor/libs/jquery/jquery.js"></script>

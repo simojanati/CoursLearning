@@ -1,4 +1,4 @@
-# VBA Eco Academy (MVP) — Sneat + GitHub Pages + Google Sheets
+# LearnHub (MVP) — Sneat + GitHub Pages + Google Sheets
 
 هاد المشروع **static** (HTML/CSS/JS + Bootstrap/Sneat) وكيخدم فـ **GitHub Pages**.
 الداتا ديال الكورسات/الدروس/الـquiz كتكون فـ **Google Sheets** وكنوصلو ليها عبر **Google Apps Script** (Web App API).
@@ -142,3 +142,43 @@ This version supports UI i18n (FR/EN/AR) and bilingual learning content (FR/EN) 
 - `index.html` is a landing page (SEO-friendly) with language switch (FR/EN/AR UI).
 - `assets/img/og.png` is used for Open Graph preview.
 - Update `robots.txt` and `sitemap.xml` by replacing `YOUR_GITHUB_PAGES_URL` with your real GitHub Pages URL.
+
+
+## AI Assistant (optional)
+
+This project can expose an `action=aiChat` endpoint via Google Apps Script.
+
+1) In Apps Script (Project Settings), add Script Property `OPENAI_API_KEY (or GEMINI_API_KEY / GROQ_API_KEY)`.
+2) (Optional) add `OPENAI_MODEL`.
+3) Redeploy the Web App.
+
+Then, in a lesson page you will see an AI panel to explain / generate exercises / mini-quiz / review.
+
+
+## AI Assistant (Recommended setup: separate Apps Script proxy)
+
+This project runs on GitHub Pages (static). To keep API keys safe and avoid Apps Script permission issues, deploy the AI as a separate Apps Script Web App.
+
+1) Create a new Apps Script project and copy `google-apps-script-ai/Code.gs` + `google-apps-script-ai/appsscript.json`.
+2) In Apps Script **Script Properties**, set:
+   - `OPENAI_API_KEY (or GEMINI_API_KEY / GROQ_API_KEY)`
+   - optional `OPENAI_MODEL` (default: `gpt-4o-mini`)
+3) Deploy as **Web app**:
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+4) Paste the AI Web App `/exec` URL in `app/js/app-config.js` as `AI_API_BASE_URL`.
+
+The main data API (`google-apps-script/Code.gs`) no longer calls external APIs.
+
+
+### AI Proxy: OpenAI HTTP 429
+If you get `OpenAI HTTP 429`, it usually means you hit rate limits or quota/spend limits. Add billing/credits, verify your usage tier, and retry with backoff. The proxy includes automatic retries/backoff.
+
+
+## Optional: platform_settings (branding without code)
+Create a sheet named `platform_settings` to override branding.
+
+**Format B (recommended, single row):** headers on row 1, values on row 2:
+- `app_name`, `tagline_fr`, `tagline_en`, `tagline_ar`, `footer_fr`, `footer_en`, `footer_ar`, `logo_url`, `icon_url`, `primary_color`
+
+If the sheet is missing, defaults are used.

@@ -1,26 +1,31 @@
 import './admin-mode.js';
-import { getCourses, getLesson } from './api.js';
+import { getDomains, getLesson } from './api.js';
 import { qs, renderEmpty, escapeHTML } from './ui.js';
 import { getRecentLessons, getCompletedLessons, loadJSON } from './storage.js';
 import { initI18n, t, pickField } from './i18n.js';
+import { ensureTopbar } from './layout.js';
 
 const state = {
-  courses: [],
+  domains: [],
   recentIds: [],
   recentById: {}, // lessonId -> lesson
 };
 
-function courseCard(course){
-  const title = pickField(course, 'title');
-  const desc = pickField(course, 'description');
+function domainCard(domain){
+  const name = pickField(domain, 'name') || domain.name || domain.domainId;
+  const desc = pickField(domain, 'description') || domain.description || '';
+  const icon = domain.icon || 'bx-category';
   return `
     <div class="col-12 col-md-6 col-xl-4">
       <div class="card h-100">
         <div class="card-body">
-          <h5 class="card-title mb-1">${escapeHTML(title)}</h5>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-label-primary"><i class="bx ${escapeHTML(icon)}"></i></span>
+            <h5 class="card-title mb-0">${escapeHTML(name)}</h5>
+          </div>
           <p class="card-text text-muted mb-3">${escapeHTML(desc)}</p>
-          <a class="btn btn-primary" href="course.html?courseId=${encodeURIComponent(course.courseId)}">
-            <i class="bx bx-right-arrow-alt"></i> ${escapeHTML(t('actions.open'))}
+          <a class="btn btn-primary" href="modules.html?domainId=${encodeURIComponent(domain.domainId)}">
+            <i class="bx bx-right-arrow-alt"></i> ${escapeHTML(t('actions.openModules'))}
           </a>
         </div>
       </div>
@@ -79,10 +84,22 @@ async function setupContinue(){
   }
 }
 
-function renderFeatured(){
-  const featured = qs('#featuredCourses');
-  if (!featured) return;
-  featured.innerHTML = (state.courses || []).slice(0, 6).map(courseCard).join('');
+function renderDomains(){
+  const grid = qs('#domainCards');
+  const emptyCard = qs('#domainsEmptyCard');
+  const empty = qs('#domainsEmpty');
+
+  if (!grid) return;
+
+  const list = (state.domains || []);
+  if (!list.length){
+    grid.innerHTML = '';
+    if (emptyCard) emptyCard.classList.remove('d-none');
+    renderEmpty(empty, t('home.domainsEmpty'), '');
+    return;
+  }
+  if (emptyCard) emptyCard.classList.add('d-none');
+  grid.innerHTML = list.map(domainCard).join('');
 }
 
 function renderRecent(){
@@ -124,22 +141,21 @@ async function loadRecentLessonObjects(force = false){
 }
 
 async function init(){
-  initI18n();
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
 
   computeDashboard();
 
-  const featured = qs('#featuredCourses');
-  const emptyFeatured = qs('#featuredEmpty');
-  let courses = [];
-  try { courses = await getCourses(); }
+  // Domains
+  try { state.domains = await getDomains(); }
   catch (e){
-    renderEmpty(featured, t('errors.loadCourses'), String(e.message || e));
-    if (emptyFeatured) emptyFeatured.innerHTML = '';
-    return;
+    state.domains = [];
+    const empty = qs('#domainsEmpty');
+    const emptyCard = qs('#domainsEmptyCard');
+    if (emptyCard) emptyCard.classList.remove('d-none');
+    renderEmpty(empty, t('errors.loadCourses'), String(e.message || e)); // reuse generic error key
   }
-
-  state.courses = courses || [];
-  renderFeatured();
+  renderDomains();
 
   await loadRecentLessonObjects();
   renderRecent();
@@ -147,17 +163,16 @@ async function init(){
 
   // Re-render language-dependent content immediately when language changes (no refresh)
   async function onLangChange(){
-  // Re-render UI labels already handled by i18n; here we ensure data-driven content switches too.
-  try { state.courses = await getCourses(); } catch (e) {}
-  renderFeatured();
+    try { state.domains = await getDomains(); } catch (e) {}
+    renderDomains();
 
-  try { await loadRecentLessonObjects(true); } catch (e) {}
-  renderRecent();
+    try { await loadRecentLessonObjects(true); } catch (e) {}
+    renderRecent();
 
-  try { await setupContinue(); } catch (e) {}
-}
-window.__langChangedHook = onLangChange;
-window.addEventListener('lang:changed', onLangChange);
+    try { await setupContinue(); } catch (e) {}
+  }
+  window.__langChangedHook = onLangChange;
+  window.addEventListener('lang:changed', onLangChange);
 }
 
 init();

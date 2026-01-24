@@ -1,8 +1,9 @@
 import './admin-mode.js';
-import { getQuizByLesson } from './api.js';
-import { qs, renderEmpty, escapeHTML } from './ui.js';
+import { getQuizByLesson, getLesson, getCourse, getDomains, getModules } from './api.js';
+import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { saveQuizResult, setLessonCompleted } from './storage.js';
 import { initI18n, t } from './i18n.js';
+import { ensureTopbar } from './layout.js';
 
 const state = {
   lessonId: '',
@@ -51,6 +52,46 @@ function restoreAnswers(answers){
 function renderQuiz(){
   const titleEl = qs('#quizTitle');
   const emptyEl = qs('#quizEmpty');
+  if (!state.lessonId){
+    renderEmpty(emptyEl, t('common.empty'), '');
+    return;
+  }
+
+  // Load names for breadcrumbs (best-effort)
+  try { state.lesson = await getLesson(state.lessonId); } catch { state.lesson = null; }
+  if (state.courseId){
+    try { state.course = await getCourse(state.courseId); } catch { state.course = null; }
+  }
+  try { state.domains = await getDomains(); } catch { state.domains = []; }
+  if (state.domainId){
+    try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
+  }
+
+  // Back button to lesson
+  const backBtn = qs('#backToLessonBtn');
+  if (backBtn){
+    const qsPart = [`lessonId=${encodeURIComponent(state.lessonId)}`];
+    if (state.courseId) qsPart.push(`courseId=${encodeURIComponent(state.courseId)}`);
+    if (state.domainId) qsPart.push(`domainId=${encodeURIComponent(state.domainId)}`);
+    if (state.moduleId) qsPart.push(`moduleId=${encodeURIComponent(state.moduleId)}`);
+    backBtn.href = `lesson.html?${qsPart.join('&')}`;
+  }
+
+  const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
+  const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
+  const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
+  const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
+  const courseName = state.course ? (pickField(state.course,'title') || '') : '';
+  const lessonName = state.lesson ? (pickField(state.lesson,'title') || state.lesson.title || '') : '';
+
+  const bc = [{ label: t('menu.home'), href: 'home.html' }];
+  if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
+  if (moduleName) bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(state.moduleId)}` });
+  if (state.courseId) bc.push({ label: courseName || t('page.course'), href: `course.html?courseId=${encodeURIComponent(state.courseId)}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
+  bc.push({ label: lessonName || t('page.lesson'), href: `lesson.html?lessonId=${encodeURIComponent(state.lessonId)}&courseId=${encodeURIComponent(state.courseId||'')}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
+  bc.push({ label: t('page.quiz'), active: true });
+  renderBreadcrumbs(bc);
+
   const questionsEl = qs('#quizQuestions');
 
   if (!state.quiz){
@@ -143,9 +184,15 @@ function bindSubmit(){
 }
 
 async function init(){
-  initI18n();
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
 
-  state.lessonId = new URL(window.location.href).searchParams.get('lessonId') || '';
+  const sp = new URL(window.location.href).searchParams;
+  state.lessonId = sp.get('lessonId') || '';
+  state.courseId = sp.get('courseId') || '';
+  state.domainId = sp.get('domainId') || '';
+  state.moduleId = sp.get('moduleId') || '';
+
   const emptyEl = qs('#quizEmpty');
 
   try { state.quiz = await getQuizByLesson(state.lessonId); }
@@ -163,6 +210,21 @@ async function init(){
   bindSubmit();
 
   function onLangChange(){
+    // Update breadcrumbs labels
+    const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
+    const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
+    const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
+    const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
+    const courseName = state.course ? (pickField(state.course,'title') || '') : '';
+    const lessonName = state.lesson ? (pickField(state.lesson,'title') || state.lesson.title || '') : '';
+    const bc = [{ label: t('menu.home'), href: 'home.html' }];
+    if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
+    if (moduleName) bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(state.moduleId)}` });
+    if (state.courseId) bc.push({ label: courseName || t('page.course'), href: `course.html?courseId=${encodeURIComponent(state.courseId)}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
+    bc.push({ label: lessonName || t('page.lesson'), href: `lesson.html?lessonId=${encodeURIComponent(state.lessonId)}&courseId=${encodeURIComponent(state.courseId||'')}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
+    bc.push({ label: t('page.quiz'), active: true });
+    renderBreadcrumbs(bc);
+
 // preserve current answers when switching language
     const questions = state.quiz?.questions || [];
     const snap = snapshotAnswers(questions);

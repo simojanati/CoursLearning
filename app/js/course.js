@@ -1,13 +1,18 @@
 import './admin-mode.js';
-import { getCourse, getLessons } from './api.js';
-import { qs, renderEmpty, escapeHTML } from './ui.js';
+import { getCourse, getLessons, getDomains, getModules } from './api.js';
+import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { isLessonCompleted } from './storage.js';
+import { ensureTopbar } from './layout.js';
 
 const state = {
   courseId: '',
+  domainId: '',
+  moduleId: '',
   course: null,
-  lessons: []
+  lessons: [],
+  domains: [],
+  modules: []
 };
 
 function completedBadge(){
@@ -46,13 +51,12 @@ function renderLessons(list){
     const done = isLessonCompleted(l.lessonId);
     return `
       <tr>
-        <td>${idx+1}</td>
-        <td class="text-truncate">
+        <td class="lh-wrap">
           ${escapeHTML(lTitle)}
           ${done ? completedBadge() : ''}
         </td>
         <td class="text-end">
-          <a class="btn btn-sm btn-primary" href="lesson.html?lessonId=${encodeURIComponent(l.lessonId)}">
+          <a class="btn btn-sm btn-primary" href="lesson.html?lessonId=${encodeURIComponent(l.lessonId)}&courseId=${encodeURIComponent(state.courseId)}&domainId=${encodeURIComponent(state.domainId||"")}&moduleId=${encodeURIComponent(state.moduleId||"")}">
             ${escapeHTML(t('actions.open'))}
           </a>
         </td>
@@ -77,9 +81,14 @@ function applySearch(){
 }
 
 async function init(){
-  initI18n();
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
 
-  state.courseId = new URL(window.location.href).searchParams.get('courseId') || '';
+  const sp = new URL(window.location.href).searchParams;
+  state.courseId = sp.get('courseId') || '';
+  state.domainId = sp.get('domainId') || '';
+  state.moduleId = sp.get('moduleId') || '';
+
   const empty = qs('#courseEmpty');
 
   if (!state.courseId){
@@ -102,6 +111,33 @@ async function init(){
 
   updateHeader();
 
+  // Back button preserves filters when coming from Modules/Courses
+  const backBtn = qs('#backToCoursesBtn');
+  if (backBtn){
+    const qsPart = [];
+    if (state.domainId) qsPart.push(`domainId=${encodeURIComponent(state.domainId)}`);
+    if (state.moduleId) qsPart.push(`moduleId=${encodeURIComponent(state.moduleId)}`);
+    backBtn.href = qsPart.length ? `courses.html?${qsPart.join('&')}` : 'courses.html';
+  }
+
+  // Breadcrumbs
+  try { state.domains = await getDomains(); } catch { state.domains = []; }
+  if (state.domainId){
+    try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
+  }
+  const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
+  const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
+  const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
+  const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
+  const courseName = state.course ? (pickField(state.course,'title') || '') : '';
+
+  const bc = [{ label: t('menu.home'), href: 'home.html' }];
+  if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
+  if (moduleName) bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(state.moduleId)}` });
+  bc.push({ label: courseName || t('page.course'), active: true });
+  renderBreadcrumbs(bc);
+
+
   if (!state.lessons.length){
     renderEmpty(empty, t('errors.loadLessons'), '');
     return;
@@ -111,8 +147,20 @@ async function init(){
   qs('#lessonSearch')?.addEventListener('input', applySearch);
 
   function onLangChange(){
-updateHeader();
+    updateHeader();
     applySearch(); // re-renders list using new language (AR UI -> FR content)
+
+    const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
+    const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
+    const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
+    const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
+    const courseName = state.course ? (pickField(state.course,'title') || '') : '';
+
+    const bc = [{ label: t('menu.home'), href: 'home.html' }];
+    if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
+    if (moduleName) bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(state.moduleId)}` });
+    bc.push({ label: courseName || t('page.course'), active: true });
+    renderBreadcrumbs(bc);
 }
 window.__langChangedHook = onLangChange;
 window.addEventListener('lang:changed', onLangChange);

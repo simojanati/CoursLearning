@@ -18,7 +18,7 @@
       } catch (e) {}
     })();
   </script>
-<title>Courses | LearnHub</title>
+<title>Modules | LearnHub</title>
     <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -37,7 +37,7 @@
     <script src="../../assets/js/config.js"></script>
   </head>
 
-  <body data-i18n-title="page.progress">
+  <body data-i18n-title="page.modules">
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
         <!-- Menu -->
@@ -66,7 +66,7 @@
             <li class="menu-item">
               <a href="courses.html" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-book"></i>
-                <div data-i18n="menu.courses" data-i18n="progress.title">Progress</div>
+                <div data-i18n="menu.courses" data-i18n="courses.title">Courses</div>
               </a>
             </li>
 
@@ -101,68 +101,39 @@
 
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
-              
-          <div class="row g-4">
-            <div class="col-12 col-lg-6">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title" data-i18n="progress.exportTitle">Export progress</h5>
-                  <p class="text-muted" data-i18n="progress.exportDesc">Download a JSON file to back up your progress.</p>
-                  <button class="btn btn-primary" id="exportBtn">
-                    <i class="bx bx-download"></i> <span data-i18n="progress.exportBtn">Download JSON</span>
-                  </button>
+              <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                  <h5 class="mb-0" data-i18n="modules.title">Modules</h5>
+                  <span class="badge bg-label-primary">Google Sheets</span>
                 </div>
+                <div class="card-body">
+  <nav aria-label="breadcrumb" class="mb-2" id="breadcrumbs" style="display:none;">
+    <ol class="breadcrumb mb-0" id="breadcrumbList"></ol>
+  </nav>
+
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+    <div class="text-muted small" id="modulesHint"></div>
+    <a class="btn btn-sm btn-outline-secondary" href="home.html">
+      <i class="bx bx-left-arrow-alt"></i> <span data-i18n="modules.back">Back to domains</span>
+    </a>
+  </div>
+  <div class="row g-3" id="modulesGrid"></div>
+  <div class="mt-2" id="modulesEmpty"></div>
+</div>
               </div>
             </div>
 
-            <div class="col-12 col-lg-6">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title" data-i18n="progress.importTitle">Import progress</h5>
-                  <p class="text-muted" data-i18n="progress.importDesc">Import a JSON file to restore/merge progress.</p>
-
-                  <div class="mb-3">
-                    <input class="form-control" type="file" id="importFile" accept="application/json">
-                    <div class="form-text" data-i18n="progress.importPick">Choose file</div>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label" data-i18n="progress.pasteLabel">Or paste JSON here</label>
-                    <textarea class="form-control" id="importText" rows="5" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></textarea>
-                  </div>
-
-                  <div class="d-flex flex-wrap gap-3 mb-3">
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="importMode" id="modeMerge" value="merge" checked>
-                      <label class="form-check-label" for="modeMerge" data-i18n="progress.mergeLabel">Merge with existing</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="importMode" id="modeReplace" value="replace">
-                      <label class="form-check-label" for="modeReplace" data-i18n="progress.replaceLabel">Replace existing</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="importLang">
-                      <label class="form-check-label" for="importLang" data-i18n="progress.importLangLabel">Also import language</label>
-                    </div>
-                  </div>
-
-                  <div class="d-flex flex-wrap gap-2">
-                    <button class="btn btn-success" id="importBtn">
-                      <i class="bx bx-upload"></i> <span data-i18n="progress.importBtn">Import</span>
-                    </button>
-                    <button class="btn btn-outline-danger ms-auto" id="resetBtn">
-                      <i class="bx bx-trash"></i> <span data-i18n="progress.resetBtn">Reset progress</span>
-                    </button>
-                  </div>
-
-                  <div class="alert alert-info mt-3 mb-0" id="statusBox">
-                    <span id="statusText" data-i18n="progress.status.ready">Ready.</span>
-                  </div>
-                </div>
+            <footer class="content-footer footer bg-footer-theme">
+              <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                <div class="mb-2 mb-md-0">© 2026 LearnHub. All rights reserved.</div>
+                <div><span class="text-muted">MVP</span></div>
               </div>
-            </div>
+            </footer>
+
+            <div class="content-backdrop fade"></div>
           </div>
-
+        </div>
+      </div>
       <div class="layout-overlay layout-menu-toggle"></div>
     </div>
 
@@ -173,6 +144,6 @@
     <script src="../../assets/vendor/js/menu.js"></script>
     <script src="../../assets/js/main.js"></script>
 
-    <script type="module" src="../js/progress.js"></script>
+    <script type="module" src="../js/modules.js"></script>
   </body>
 </html>

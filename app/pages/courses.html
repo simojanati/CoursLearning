@@ -7,7 +7,7 @@
   <script>
     (function () {
       try {
-        var lang = (localStorage.getItem('vbaEco:lang') || localStorage.getItem('lang') || 'fr');
+        var lang = (localStorage.getItem('learnHub:lang') || localStorage.getItem('learnHub:lang') || localStorage.getItem('lang') || 'fr');
         if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
         document.documentElement.lang = lang;
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -18,7 +18,7 @@
       } catch (e) {}
     })();
   </script>
-<title>Courses | VBA Eco Academy</title>
+<title>Courses | LearnHub</title>
     <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -45,9 +45,9 @@
           <div class="app-brand demo">
             <a href="home.html" class="app-brand-link">
               <span class="app-brand-logo demo">
-                <img src="../../assets/img/icons/brands/github.png" alt="logo" style="width:24px; height:24px;" />
+                <img src="../../assets/img/brand/icon.png" alt="LearnHub" style="width:24px; height:24px;" />
               </span>
-              <span class="app-brand-text demo menu-text fw-bolder ms-2">VBA Eco Academy</span>
+              <span class="app-brand-text demo menu-text fw-bolder ms-2">LearnHub</span>
             </a>
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
               <i class="bx bx-chevron-left bx-sm align-middle"></i>
@@ -97,37 +97,7 @@
         <!-- / Menu -->
 
         <div class="layout-page">
-          <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
-            <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-              <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
-                <i class="bx bx-menu bx-sm"></i>
-              </a>
-            </div>
-            <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-              <div class="navbar-nav align-items-center">
-                <div class="nav-item d-flex align-items-center">
-                  <i class="bx bx-search fs-4 lh-0"></i>
-                  <input id="courseSearch" type="text" class="form-control border-0 shadow-none" placeholder="Search courses…" data-i18n-placeholder="courses.searchPlaceholder" aria-label="Search" />
-                </div>
-              </div>
-            
-<ul class="navbar-nav flex-row align-items-center ms-auto">
-
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle hide-arrow" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="bx bx-globe bx-sm"></i>
-    <span class="ms-1" id="langLabel">FR</span>
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end">
-    <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
-    <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
-    <li><a class="dropdown-item" href="#" data-lang="ar">العربية</a></li>
-  </ul>
-</li>
-
-</ul>
-</div>
-          </nav>
+          <div id="lhTopbar"></div>
 
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
@@ -136,8 +106,25 @@
                   <h5 class="mb-0" data-i18n="courses.title">Courses</h5>
                   <span class="badge bg-label-primary">Google Sheets</span>
                 </div>
+  <nav aria-label="breadcrumb" class="mb-2" id="breadcrumbs" style="display:none;">
+    <ol class="breadcrumb mb-0" id="breadcrumbList"></ol>
+  </nav>
                 <div class="table-responsive text-nowrap">
                   
+              <div class="row g-3 align-items-end mb-3" id="domainModuleRow">
+  <div class="col-12 col-md-6">
+    <label class="form-label" data-i18n="courses.filter.domain">Domain</label>
+    <select class="form-select" id="domainFilter">
+      <option value="all" data-i18n="courses.filter.all">All</option>
+    </select>
+  </div>
+  <div class="col-12 col-md-6">
+    <label class="form-label" data-i18n="courses.filter.module">Module</label>
+    <select class="form-select" id="moduleFilter">
+      <option value="all" data-i18n="courses.filter.all">All</option>
+    </select>
+  </div>
+</div>
               <div class="row g-3 align-items-end mb-3">
                 <div class="col-12 col-md-6">
                   <label class="form-label" data-i18n="courses.filter.level">Level</label>
@@ -159,7 +146,6 @@
 <table class="table">
                     <thead>
                       <tr>
-                        <th data-i18n="courses.table.index">#</th>
                         <th data-i18n="courses.table.course">Course</th>
                         <th data-i18n="courses.table.level">Level</th>
                         <th class="text-end" data-i18n="courses.table.action">Action</th>
@@ -174,7 +160,7 @@
 
             <footer class="content-footer footer bg-footer-theme">
               <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> VBA Eco Academy</div>
+                <div class="mb-2 mb-md-0">© 2026 LearnHub. All rights reserved.</div>
                 <div><span class="text-muted">MVP</span></div>
               </div>
             </footer>

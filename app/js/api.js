@@ -1,4 +1,4 @@
-import { API_BASE_URL, USE_MOCK_DATA, SPREADSHEET_ID } from './app-config.js';
+import { API_BASE_URL, USE_MOCK_DATA, SPREADSHEET_ID, AI_API_BASE_URL } from './app-config.js';
 import { mockCourses, mockLessons, mockQuizzes } from './mock-data.js';
 
 function buildUrl(action, params = {}){
@@ -16,6 +16,7 @@ function jsonp(action, params = {}) {
     const cbName = `__jsonp_${Math.random().toString(16).slice(2)}`;
     const url = buildUrl(action, params);
     url.searchParams.set('callback', cbName);
+    url.searchParams.set('_ts', Date.now().toString());
 
     const cleanup = () => {
       try { delete window[cbName]; } catch {}
@@ -44,7 +45,43 @@ function jsonp(action, params = {}) {
         cleanup();
         reject(new Error('JSONP timeout'));
       }
-    }, 10000);
+    }, 45000);
+  });
+}
+
+function jsonpUrl(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = `__jsonp_${Math.random().toString(16).slice(2)}`;
+    url.searchParams.set('callback', cbName);
+    url.searchParams.set('_ts', Date.now().toString());
+
+    const cleanup = () => {
+      try { delete window[cbName]; } catch {}
+      script.remove();
+    };
+
+    const script = document.createElement('script');
+    script.src = url.toString();
+    script.async = true;
+
+    window[cbName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('JSONP error'));
+    };
+
+    document.head.appendChild(script);
+
+    setTimeout(() => {
+      if (window[cbName]) {
+        cleanup();
+        reject(new Error('JSONP timeout'));
+      }
+    }, 45000);
   });
 }
 
@@ -55,22 +92,70 @@ async function fetchJson(action, params = {}) {
   return res.json();
 }
 
+function buildAiUrl(action, params = {}){
+  const base = (AI_API_BASE_URL && String(AI_API_BASE_URL).trim().length) ? AI_API_BASE_URL : '';
+  if (!base){
+    throw new Error('AI proxy not configured. Set AI_API_BASE_URL in app-config.js');
+  }
+  const url = new URL(base);
+  url.searchParams.set('action', action);
+  if (SPREADSHEET_ID && String(SPREADSHEET_ID).trim().length){
+    url.searchParams.set('spreadsheetId', String(SPREADSHEET_ID).trim());
+  }
+  Object.entries(params || {}).forEach(([k,v]) => {
+    if (v === undefined || v === null) return;
+    url.searchParams.set(k, String(v));
+  });
+  return url;
+}
+
 async function apiCall(action, params = {}) {
-  // Try fetch first; if CORS blocks, fallback to JSONP.
+  // Show global loader while API is in-flight (even via JSONP fallback)
+  try { window.dispatchEvent(new CustomEvent('lh:loading', { detail: { on: true } })); } catch(e) {}
+
   try {
-    const data = await fetchJson(action, params);
-    if (data && data.error) throw new Error(String(data.error));
-    return data;
-  } catch (e) {
-    const data = await jsonp(action, params);
-    if (data && data.error) throw new Error(String(data.error));
-    return data;
+    // Try fetch first; if CORS blocks, fallback to JSONP.
+    try {
+      const data = await fetchJson(action, params);
+      if (data && data.error){
+        const extra = data.message ? (': ' + String(data.message)) : '';
+        throw new Error(String(data.error) + extra);
+      }
+      return data;
+    } catch (e) {
+      const data = await jsonp(action, params);
+      if (data && data.error){
+        const extra = data.message ? (': ' + String(data.message)) : '';
+        throw new Error(String(data.error) + extra);
+      }
+      return data;
+    }
+  } finally {
+    try { window.dispatchEvent(new CustomEvent('lh:loading', { detail: { on: false } })); } catch(e) {}
   }
 }
 
-export async function getCourses(){
+
+export async function getDomains(){
+  if (USE_MOCK_DATA) return [];
+  const data = await apiCall('domains');
+  return (data.domains||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+}
+
+export async function getModules(domainId=''){
+  if (USE_MOCK_DATA) return [];
+  const params = {};
+  if (domainId && domainId !== 'all') params.domainId = domainId;
+  const data = await apiCall('modules', params);
+  return (data.modules||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+}
+
+export async function getCourses(filters = {}){
   if (USE_MOCK_DATA) return [...mockCourses].sort((a,b)=> (a.order??0)-(b.order??0));
-  const data = await apiCall('courses');
+  const params = {};
+  if (filters.domainId && filters.domainId !== 'all') params.domainId = filters.domainId;
+  if (filters.moduleId && filters.moduleId !== 'all') params.moduleId = filters.moduleId;
+  const data = await apiCall('courses', params);
   return (data.courses||[]).sort((a,b)=> (a.order??0)-(b.order??0));
 }
 
@@ -115,4 +200,44 @@ export async function getHealth(){
     };
   }
   return await apiCall('health', {});
+}
+
+
+// AI assistant (via Apps Script)
+export async function aiChat({ lessonId, lang, mode, question, title, context, scope }){
+  const q = String(question || '').trim();
+  const m = String(mode || '').trim() || 'explain';
+  const l = String(lang || '').trim() || 'fr';
+  const t = String(title || '').trim();
+  const c = String(context || '').trim();
+  const s = String(scope || '').trim(); // 'lesson'|'general'
+  if (!q) throw new Error('Empty question');
+  const url = buildAiUrl('aiChat', {
+    lessonId: String(lessonId||''),
+    lang: l,
+    mode: m,
+    scope: s,
+    title: t,
+    context: c,
+    q: q
+  });
+  const data = await jsonpUrl(url);
+  if (data && data.error){
+    const extra = data.message ? (': ' + String(data.message)) : '';
+    throw new Error(String(data.error) + extra);
+  }
+  return data;
+}
+
+
+// -------------------- Platform settings (optional) --------------------
+export function fetchPlatformSettings(lang = 'fr') {
+  const base = window.APP_CONFIG?.API_BASE_URL || window.API_BASE_URL || '';
+  if (!base) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    jsonpUrl(`${base}?action=platformSettings&lang=${encodeURIComponent(lang)}`, (data) => {
+      resolve(data?.settings || null);
+    }, () => resolve(null));
+  });
 }

@@ -2,6 +2,7 @@ import './admin-mode.js';
 import { getHealth } from './api.js';
 import { qs, escapeHTML, renderEmpty } from './ui.js';
 import { initI18n, t } from './i18n.js';
+import { ensureTopbar } from './layout.js';
 
 function badge(level){
   const map = { ok: 'success', warn: 'warning', err: 'danger', info: 'info' };
@@ -154,8 +155,9 @@ async function run(){
   }
 }
 
-function init(){
-  initI18n();
+async function init(){
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
+initI18n();
   qs('#runHealth')?.addEventListener('click', run);
   run();
 }

@@ -1,10 +1,13 @@
 import './admin-mode.js';
-import { getCourses } from './api.js';
-import { qs, renderEmpty, escapeHTML } from './ui.js';
+import { getCourses, getDomains, getModules } from './api.js';
+import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField, levelLabel } from './i18n.js';
+import { ensureTopbar } from './layout.js';
 
 const state = {
-  courses: []
+  courses: [],
+  domains: [],
+  modules: []
 };
 
 function i18nizeLevelOptions(){
@@ -23,12 +26,12 @@ function i18nizeLevelOptions(){
 function row(c, idx){
   const title = pickField(c, 'title');
   const level = levelLabel(c.level || c.levelKey || '');
+  const desc = pickField(c,'description');
   return `
     <tr>
-      <td>${idx+1}</td>
       <td>
         <div class="fw-semibold">${escapeHTML(title)}</div>
-        <small class="text-muted d-block text-truncate" style="max-width:520px">${escapeHTML(pickField(c,'description'))}</small>
+        ${desc ? `<small class="text-muted d-block lh-wrap">${escapeHTML(desc)}</small>` : ''}
       </td>
       <td><span class="badge bg-label-secondary">${escapeHTML(level)}</span></td>
       <td class="text-end">
@@ -55,7 +58,7 @@ function render(list){
 }
 
 function applyFilters(){
-  const search = qs('#courseSearch');
+  const search = qs('#lhTopSearch');
   const levelFilter = qs('#levelFilter');
   const sortFilter = qs('#sortFilter');
 
@@ -84,30 +87,168 @@ function applyFilters(){
   }
 
   render(list);
+  updateBreadcrumbs();
+}
+
+function getUrlPref(){
+  const sp = new URLSearchParams(location.search);
+  return {
+    domainId: sp.get('domainId') || 'all',
+    moduleId: sp.get('moduleId') || 'all'
+  };
+}
+
+
+function updateBreadcrumbs(){
+  const domainSel = qs('#domainFilter');
+  const moduleSel = qs('#moduleFilter');
+  const domainId = (domainSel?.value || getUrlPref().domainId || 'all');
+  const moduleId = (moduleSel?.value || getUrlPref().moduleId || 'all');
+
+  const bc = [{ label: t('menu.home'), href: 'home.html' }];
+
+  if (domainId && domainId !== 'all'){
+    const d = (state.domains||[]).find(x => String(x.domainId) === String(domainId));
+    const domainName = d ? (pickField(d,'name') || d.domainId) : domainId;
+    bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(domainId)}` });
+
+    if (moduleId && moduleId !== 'all'){
+      const m = (state.modules||[]).find(x => String(x.moduleId) === String(moduleId));
+      const moduleName = m ? (pickField(m,'title') || m.moduleId) : moduleId;
+      bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(domainId)}&moduleId=${encodeURIComponent(moduleId)}` });
+    }
+  }
+
+  bc.push({ label: t('page.courses'), active: true });
+  renderBreadcrumbs(bc);
+}
+
+function rebuildDomainOptions(selected){
+  const domainSel = qs('#domainFilter');
+  if (!domainSel) return;
+  const all = domainSel.querySelector('option[value="all"]') || (() => {
+    const o=document.createElement('option'); o.value='all'; return o;
+  })();
+  all.textContent = t('courses.filter.all');
+  domainSel.innerHTML = '';
+  domainSel.appendChild(all);
+
+  (state.domains||[]).forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.domainId;
+    opt.textContent = pickField(d, 'name') || d.domainId;
+    domainSel.appendChild(opt);
+  });
+
+  domainSel.value = selected || 'all';
+}
+
+function rebuildModuleOptions(selected){
+  const moduleSel = qs('#moduleFilter');
+  if (!moduleSel) return;
+  const all = moduleSel.querySelector('option[value="all"]') || (() => {
+    const o=document.createElement('option'); o.value='all'; return o;
+  })();
+  all.textContent = t('courses.filter.all');
+  moduleSel.innerHTML = '';
+  moduleSel.appendChild(all);
+
+  (state.modules||[]).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.moduleId;
+    opt.textContent = pickField(m, 'title') || m.moduleId;
+    moduleSel.appendChild(opt);
+  });
+
+  moduleSel.value = selected || 'all';
+}
+
+async function loadModulesFor(domainId){
+  try {
+    state.modules = await getModules(domainId && domainId !== 'all' ? domainId : '');
+  } catch (e) {
+    state.modules = [];
+  }
+}
+
+async function loadCoursesFor(domainId, moduleId){
+  try {
+    state.courses = await getCourses({
+      domainId: domainId || 'all',
+      moduleId: moduleId || 'all'
+    });
+  } catch (e){
+    state.courses = [];
+    renderEmpty(qs('#coursesEmpty'), t('errors.loadCourses'), String(e.message || e));
+  }
 }
 
 async function init(){
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'courses.searchPlaceholder' });
   initI18n();
   i18nizeLevelOptions();
 
-  try { state.courses = await getCourses(); }
-  catch (e){
-    renderEmpty(qs('#coursesEmpty'), t('errors.loadCourses'), String(e.message || e));
-    return;
+  // Load domains (optional)
+  try {
+    state.domains = await getDomains();
+  } catch (e) {
+    state.domains = [];
+  }
+
+  const domainSel = qs('#domainFilter');
+  const moduleSel = qs('#moduleFilter');
+  const rowEl = qs('#domainModuleRow');
+  const pref = getUrlPref();
+
+  if (!state.domains || state.domains.length === 0) {
+    if (rowEl) rowEl.style.display = 'none';
+    await loadCoursesFor('all','all');
+  } else {
+    if (rowEl) rowEl.style.display = '';
+    rebuildDomainOptions(pref.domainId);
+
+    await loadModulesFor(domainSel?.value || 'all');
+    rebuildModuleOptions(pref.moduleId);
+
+    await loadCoursesFor(domainSel?.value || 'all', moduleSel?.value || 'all');
+
+    domainSel?.addEventListener('change', async () => {
+      await loadModulesFor(domainSel.value);
+      rebuildModuleOptions('all');
+      await loadCoursesFor(domainSel.value, 'all');
+      applyFilters();
+    });
+
+    moduleSel?.addEventListener('change', async () => {
+      await loadCoursesFor(domainSel?.value || 'all', moduleSel.value);
+      applyFilters();
+    });
   }
 
   applyFilters();
 
-  qs('#courseSearch')?.addEventListener('input', applyFilters);
+  qs('#lhTopSearch')?.addEventListener('input', applyFilters);
   qs('#levelFilter')?.addEventListener('change', applyFilters);
   qs('#sortFilter')?.addEventListener('change', applyFilters);
 
-  function onLangChange(){
-i18nizeLevelOptions();
+  async function onLangChange(){
+    i18nizeLevelOptions();
+
+    const curDomain = domainSel?.value || 'all';
+    const curModule = moduleSel?.value || 'all';
+
+    try { state.domains = await getDomains(); } catch {}
+    rebuildDomainOptions(curDomain);
+
+    await loadModulesFor(curDomain);
+    rebuildModuleOptions(curModule);
+
+    await loadCoursesFor(curDomain, curModule);
+
     applyFilters();
-}
-window.__langChangedHook = onLangChange;
-window.addEventListener('lang:changed', onLangChange);
+  }
+  window.__langChangedHook = onLangChange;
+  window.addEventListener('lang:changed', onLangChange);
 }
 
 init();
