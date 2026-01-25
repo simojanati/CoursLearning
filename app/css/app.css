@@ -78,6 +78,16 @@ html[dir="rtl"].layout-menu-fixed-offcanvas .layout-menu {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
+
+  /* RTL mobile offcanvas menu should slide from the RIGHT (Sneat default is LEFT) */
+  html[dir="rtl"] .layout-menu {
+    left: auto !important;
+    right: 0 !important;
+    transform: translate3d(100%, 0, 0) !important;
+  }
+  html[dir="rtl"].layout-menu-expanded .layout-menu {
+    transform: translate3d(0, 0, 0) !important;
+  }
 }
 
 /* Submenu indentation (RTL-friendly) */
@@ -375,8 +385,8 @@ html[data-lh-theme="dark"] .text-muted{ color: rgba(203,213,225,0.72) !important
 /* Surfaces */
 html[data-lh-theme="dark"] .card,
 html[data-lh-theme="dark"] .modal-content,
-html[data-lh-theme="dark"] .dropdown-menu,
-html[data-lh-theme="dark"] .hero-illustration{ background: #111827 !important; }
+html[data-lh-theme="dark"] .dropdown-menu{ background: #111827 !important; }
+
 html[data-lh-theme="dark"] .card,
 html[data-lh-theme="dark"] .modal-content,
 html[data-lh-theme="dark"] .dropdown-menu,
@@ -416,7 +426,6 @@ html[data-lh-theme="dark"] .landing-shell{
   background: #0b1020 !important;
 }
 
-html[data-lh-theme="dark"] .landing-card{ background: rgba(17,24,39,0.85) !important; }
 html[data-lh-theme="dark"] .landing-footer,
 html[data-lh-theme="dark"] .bg-footer-theme{
   background: #0f172a !important;
@@ -425,14 +434,11 @@ html[data-lh-theme="dark"] .bg-footer-theme{
 html[data-lh-theme="dark"] .landing-footer .text-muted,
 html[data-lh-theme="dark"] .bg-footer-theme .text-muted{ color: rgba(203,213,225,0.72) !important; }
 
-html[data-lh-theme="dark"] .hero-carousel img{ background: #0b1224 !important; }
 
 /* Loader overlay */
 html[data-lh-theme="dark"] #lhGlobalLoader.lh-loader{ background: rgba(15,23,42,.55); }
 
-/* Dark theme polish: landing slider stays white + AI drawer surfaces */
-html[data-lh-theme="dark"] .hero-illustration{ background: #ffffff !important; }
-html[data-lh-theme="dark"] .hero-carousel img{ background: #ffffff !important; }
+/* Dark theme polish: AI drawer surfaces */
 
 /* Offcanvas (AI drawer) */
 html[data-lh-theme="dark"] .offcanvas{ background: #111827 !important; color: rgba(226,232,240,0.92) !important; }
@@ -527,7 +533,6 @@ body.landing-shell{ background: #f6f7fb; }
 }
 
 /* Landing dark overrides */
-html[data-lh-theme="dark"] body.landing-shell{ background: #0b1020 !important; }
 /* landing-shell itself is forced flat earlier in dark section */
 html[data-lh-theme="dark"] .landing-card{
   background: rgba(17,24,39,0.88) !important;
@@ -568,8 +573,3 @@ html[data-lh-theme="dark"] .landing-nav{
   }
 }
 
-/* Landing: keep the hero carousel white even in dark (images have white background) */
-html[data-lh-theme="dark"] .hero-carousel.hero-illustration{
-  background: #fff !important;
-  border-color: rgba(148,163,184,0.12) !important;
-}
