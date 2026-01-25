@@ -3,6 +3,7 @@ import { getCourses, getDomains, getModules } from './api.js';
 import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField, levelLabel } from './i18n.js';
 import { ensureTopbar } from './layout.js';
+import { getCourseProgress, upsertCourseMeta } from './storage.js';
 
 const state = {
   courses: [],
@@ -27,10 +28,14 @@ function row(c, idx){
   const title = pickField(c, 'title');
   const level = levelLabel(c.level || c.levelKey || '');
   const desc = pickField(c,'description');
+  const p = getCourseProgress(c.courseId);
+  const pTxt = (p && typeof p.pct === 'number' && typeof p.total === 'number')
+    ? `<span class="badge bg-label-success ms-2">${escapeHTML(String(p.pct))}%</span>`
+    : '';
   return `
     <tr>
       <td>
-        <div class="fw-semibold">${escapeHTML(title)}</div>
+        <div class="fw-semibold">${escapeHTML(title)}${pTxt}</div>
         ${desc ? `<small class="text-muted d-block lh-wrap">${escapeHTML(desc)}</small>` : ''}
       </td>
       <td><span class="badge bg-label-secondary">${escapeHTML(level)}</span></td>
@@ -177,6 +182,14 @@ async function loadCoursesFor(domainId, moduleId){
       domainId: domainId || 'all',
       moduleId: moduleId || 'all'
     });
+
+    // Save course meta mapping so other pages can aggregate progress by module/domain
+    (state.courses || []).forEach(c => {
+      upsertCourseMeta(c.courseId, {
+        domainId: c.domainId || domainId || '',
+        moduleId: c.moduleId || moduleId || ''
+      });
+    });
   } catch (e){
     state.courses = [];
     renderEmpty(qs('#coursesEmpty'), t('errors.loadCourses'), String(e.message || e));
@@ -237,14 +250,9 @@ async function init(){
     const curDomain = domainSel?.value || 'all';
     const curModule = moduleSel?.value || 'all';
 
-    try { state.domains = await getDomains(); } catch {}
+    // No API reload needed: data objects contain multilingual fields.
     rebuildDomainOptions(curDomain);
-
-    await loadModulesFor(curDomain);
     rebuildModuleOptions(curModule);
-
-    await loadCoursesFor(curDomain, curModule);
-
     applyFilters();
   }
   window.__langChangedHook = onLangChange;

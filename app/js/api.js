@@ -1,6 +1,24 @@
 import { API_BASE_URL, USE_MOCK_DATA, SPREADSHEET_ID, AI_API_BASE_URL } from './app-config.js';
 import { mockCourses, mockLessons, mockQuizzes } from './mock-data.js';
 
+function _normOrder(v){
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function _cmpOrderThen(a, b, fallbackKey){
+  const ao = _normOrder(a?.order);
+  const bo = _normOrder(b?.order);
+  if (ao != null && bo != null && ao !== bo) return ao - bo;
+  if (ao != null && bo == null) return -1;
+  if (ao == null && bo != null) return 1;
+  // stable deterministic fallback
+  const ak = String(a?.[fallbackKey] || '').toLowerCase();
+  const bk = String(b?.[fallbackKey] || '').toLowerCase();
+  return ak.localeCompare(bk);
+}
+
 function buildUrl(action, params = {}){
   const url = new URL(API_BASE_URL);
   url.searchParams.set('action', action);
@@ -139,7 +157,7 @@ async function apiCall(action, params = {}) {
 export async function getDomains(){
   if (USE_MOCK_DATA) return [];
   const data = await apiCall('domains');
-  return (data.domains||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+  return (data.domains||[]).sort((a,b)=> _cmpOrderThen(a,b,'domainId'));
 }
 
 export async function getModules(domainId=''){
@@ -147,7 +165,7 @@ export async function getModules(domainId=''){
   const params = {};
   if (domainId && domainId !== 'all') params.domainId = domainId;
   const data = await apiCall('modules', params);
-  return (data.modules||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+  return (data.modules||[]).sort((a,b)=> _cmpOrderThen(a,b,'moduleId'));
 }
 
 export async function getCourses(filters = {}){
@@ -156,7 +174,7 @@ export async function getCourses(filters = {}){
   if (filters.domainId && filters.domainId !== 'all') params.domainId = filters.domainId;
   if (filters.moduleId && filters.moduleId !== 'all') params.moduleId = filters.moduleId;
   const data = await apiCall('courses', params);
-  return (data.courses||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+  return (data.courses||[]).sort((a,b)=> _cmpOrderThen(a,b,'courseId'));
 }
 
 export async function getCourse(courseId){
@@ -168,7 +186,7 @@ export async function getCourse(courseId){
 export async function getLessons(courseId){
   if (USE_MOCK_DATA) return mockLessons.filter(l => l.courseId === courseId).sort((a,b)=> (a.order??0)-(b.order??0));
   const data = await apiCall('lessons', { courseId });
-  return (data.lessons||[]).sort((a,b)=> (a.order??0)-(b.order??0));
+  return (data.lessons||[]).sort((a,b)=> _cmpOrderThen(a,b,'lessonId'));
 }
 
 export async function getLesson(lessonId){
@@ -180,7 +198,14 @@ export async function getLesson(lessonId){
 export async function getQuizByLesson(lessonId){
   if (USE_MOCK_DATA) return mockQuizzes.find(q => q.lessonId === lessonId) || null;
   const data = await apiCall('quiz', { lessonId });
-  return data.quiz || null;
+  const quiz = data.quiz || null;
+  // Apps Script returns questions separately: { quiz, questions }
+  if (quiz){
+    quiz.questions = data.questions || quiz.questions || [];
+    // normalize numeric fields (defensive)
+    if (quiz.passingScore != null) quiz.passingScore = Number(quiz.passingScore) || 0;
+  }
+  return quiz;
 }
 
 
@@ -240,4 +265,16 @@ export function fetchPlatformSettings(lang = 'fr') {
       resolve(data?.settings || null);
     }, () => resolve(null));
   });
+}
+
+
+export async function searchAll(q, limit=20){
+  if (!q) return { domains:[], modules:[], courses:[], lessons:[] };
+  const data = await apiCall('search', { q, limit });
+  return {
+    domains: data.domains || [],
+    modules: data.modules || [],
+    courses: data.courses || [],
+    lessons: data.lessons || [],
+  };
 }

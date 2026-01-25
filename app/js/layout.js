@@ -1,3 +1,4 @@
+import { initGlobalSearch } from './global-search.js';
 /**
  * Shared layout loader (topbar injection) to avoid duplicating navbar markup.
  *
@@ -47,6 +48,11 @@ export async function ensureTopbar(options = {}){
       }
       // Clear any previous value on navigation
       if (!options.preserveSearchValue) searchInput.value = '';
+
+      // Init global search dropdown
+      const menu = mount.querySelector('#lhGlobalSearchMenu');
+      initGlobalSearch({ input: searchInput, menu });
+
     }
 
     // Notify page scripts that topbar is ready

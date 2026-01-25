@@ -101,6 +101,70 @@
 
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
+
+              <!-- Dashboard -->
+              <div class="row g-4 mb-4" id="progressDashboard">
+                <div class="col-12 col-lg-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title" data-i18n="progress.overallTitle">Overall</h5>
+                      <p class="text-muted mb-3" data-i18n="progress.overallDesc">Your learning progress across all lessons.</p>
+
+                      <div class="d-flex align-items-baseline gap-2 mb-2">
+                        <div class="fs-3 fw-semibold" id="overallPct">0%</div>
+                        <div class="text-muted" id="overallCounts">0/0</div>
+                      </div>
+
+                      <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="overallBar" aria-valuemin="0" aria-valuemax="100"></div>
+                      </div>
+                      <div class="small text-muted mt-2" id="overallNote" data-i18n="progress.overallNote">Based on available content.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title" data-i18n="progress.continueTitle">Continue</h5>
+                      <p class="text-muted mb-3" data-i18n="progress.continueDesc">Pick up where you left off.</p>
+
+                      <div class="mb-3">
+                        <div class="fw-semibold" id="lastLessonTitle">—</div>
+                        <div class="small text-muted" id="lastLessonMeta"> </div>
+                      </div>
+
+                      <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-primary" id="continueBtn" href="#">
+                          <i class="bx bx-play"></i> <span data-i18n="progress.continueBtn">Continue</span>
+                        </a>
+                        <a class="btn btn-outline-secondary" href="courses.html">
+                          <i class="bx bx-book"></i> <span data-i18n="progress.browseBtn">Browse courses</span>
+                        </a>
+                      </div>
+
+                      <div class="alert alert-light mt-3 mb-0 d-none" id="noActivityBox">
+                        <span data-i18n="progress.noActivity">No activity yet. Open a course to start.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title" data-i18n="progress.topCoursesTitle">Top courses</h5>
+                      <p class="text-muted mb-3" data-i18n="progress.topCoursesDesc">Courses with the most progress.</p>
+
+                      <div id="topCoursesList"></div>
+                      <div class="alert alert-light mb-0 d-none" id="topCoursesEmpty">
+                        <span data-i18n="progress.topCoursesEmpty">No course progress yet.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /Dashboard -->
               
           <div class="row g-4">
             <div class="col-12 col-lg-6">

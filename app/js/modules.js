@@ -3,6 +3,7 @@ import { getDomains, getModules } from './api.js';
 import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { ensureTopbar } from './layout.js';
+import { computeModuleProgress } from './storage.js';
 
 const state = {
   domainId: '',
@@ -18,11 +19,15 @@ function parseParams(){
 function moduleCard(m){
   const title = pickField(m, 'title') || m.title || m.moduleId;
   const desc = pickField(m, 'description') || m.description || '';
+  const prog = computeModuleProgress(m.moduleId);
+  const badge = (prog && prog.pct != null)
+    ? `<span class="badge bg-label-success ms-2">${escapeHTML(String(prog.pct))}%</span>`
+    : '';
   return `
     <div class="col-12 col-md-6 col-xl-4">
       <div class="card h-100">
         <div class="card-body">
-          <h5 class="card-title mb-1">${escapeHTML(title)}</h5>
+          <h5 class="card-title mb-1">${escapeHTML(title)}${badge}</h5>
           <p class="card-text text-muted mb-3">${escapeHTML(desc)}</p>
           <a class="btn btn-primary" href="courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(m.moduleId)}">
             <i class="bx bx-right-arrow-alt"></i> ${escapeHTML(t('actions.openCourses'))}
@@ -97,8 +102,8 @@ async function init(){
   qs('#lhTopSearch')?.addEventListener('input', applySearch);
 
   async function onLangChange(){
-    try { state.domains = await getDomains(); } catch {}
-    const d = state.domains.find(x => String(x.domainId) === state.domainId);
+    // No API reload needed: objects already include multilingual fields.
+    const d = (state.domains||[]).find(x => String(x.domainId) === state.domainId);
     const name = d ? (pickField(d,'name') || d.domainId) : state.domainId;
     if (hint) hint.textContent = `${t('courses.filter.domain')}: ${name}`;
     renderBreadcrumbs([
@@ -107,7 +112,6 @@ async function init(){
       { label: t('modules.title'), active: true }
     ]);
 
-    try { state.modules = await getModules(state.domainId); } catch {}
     applySearch();
   }
   window.__langChangedHook = onLangChange;

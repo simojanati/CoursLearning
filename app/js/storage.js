@@ -33,6 +33,81 @@ export function setLessonCompleted(lessonId, score=null){
   saveJSON("progress", progress);
 }
 
+// ---------------- Progress aggregates (Course / Module / Domain) ----------------
+// Small cached aggregates so lists can show progress instantly.
+
+export function upsertCourseMeta(courseId, meta){
+  if (!courseId) return;
+  const all = loadJSON('courseMeta', {});
+  const prev = all[String(courseId)] || {};
+  all[String(courseId)] = {
+    ...prev,
+    ...(meta && typeof meta === 'object' ? meta : {}),
+    updatedAt: new Date().toISOString()
+  };
+  saveJSON('courseMeta', all);
+}
+
+export function getCourseMeta(courseId){
+  const all = loadJSON('courseMeta', {});
+  return all[String(courseId)] || null;
+}
+
+export function getAllCourseMeta(){
+  return loadJSON('courseMeta', {});
+}
+
+export function saveCourseProgress(courseId, doneCount, totalCount, meta = null){
+  if (!courseId) return;
+  const all = loadJSON('courseProgress', {});
+  const total = Number(totalCount || 0);
+  const done = Number(doneCount || 0);
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  all[String(courseId)] = {
+    done,
+    total,
+    pct,
+    ...(meta && typeof meta === 'object' ? meta : {}),
+    updatedAt: new Date().toISOString()
+  };
+  saveJSON('courseProgress', all);
+  // also keep meta mapping if provided
+  if (meta && (meta.domainId || meta.moduleId)) upsertCourseMeta(courseId, meta);
+}
+
+export function getCourseProgress(courseId){
+  const all = loadJSON('courseProgress', {});
+  return all[String(courseId)] || null;
+}
+
+export function getAllCourseProgress(){
+  return loadJSON('courseProgress', {});
+}
+
+export function computeModuleProgress(moduleId){
+  const all = getAllCourseProgress();
+  let done = 0, total = 0;
+  Object.values(all || {}).forEach(p => {
+    if (!p || String(p.moduleId || '') !== String(moduleId || '')) return;
+    done += Number(p.done || 0);
+    total += Number(p.total || 0);
+  });
+  const pct = total > 0 ? Math.round((done / total) * 100) : null;
+  return { done, total, pct };
+}
+
+export function computeDomainProgress(domainId){
+  const all = getAllCourseProgress();
+  let done = 0, total = 0;
+  Object.values(all || {}).forEach(p => {
+    if (!p || String(p.domainId || '') !== String(domainId || '')) return;
+    done += Number(p.done || 0);
+    total += Number(p.total || 0);
+  });
+  const pct = total > 0 ? Math.round((done / total) * 100) : null;
+  return { done, total, pct };
+}
+
 export function getProgress(){
   return loadJSON("progress", {});
 }

@@ -1,6 +1,6 @@
 import { getLesson, getQuizByLesson, getCourse, getLessons, getDomains, getModules, aiChat } from './api.js';
 import { qs, renderEmpty, setHTML, escapeHTML, renderBreadcrumbs } from './ui.js';
-import { markLessonVisited, setLessonCompleted, isLessonCompleted, loadAiChat, saveAiChat, clearAiChat, loadAiScope, saveAiScope } from './storage.js';
+import { markLessonVisited, setLessonCompleted, isLessonCompleted, loadAiChat, saveAiChat, clearAiChat, loadAiScope, saveAiScope, saveCourseProgress, upsertCourseMeta } from './storage.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { AI_ENABLED, AI_MAX_INPUT_CHARS, AI_DEFAULT_MODE } from './app-config.js';
 import { ensureTopbar } from './layout.js';
@@ -216,28 +216,38 @@ function render(){
 }
 
 
-async function setupNavAndBreadcrumbs(){
-  // Navigation buttons (Back / Prev / Next)
-  const navRow = qs('#lessonNavRow');
-  const backBtn = qs('#backToCourseBtn');
-  const prevBtn = qs('#prevLessonBtn');
-  const nextBtn = qs('#nextLessonBtn');
-
-  // Load names for breadcrumbs (best-effort)
-  try { state.domains = await getDomains(); } catch { state.domains = []; }
+async function loadNavData(force=false){
+  // Fetch navigation datasets once (language switch does not require re-fetch)
+  if (force || !state.domains || !state.domains.length){
+    try { state.domains = await getDomains(); } catch { state.domains = []; }
+  }
   if (state.domainId){
-    try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
+    if (force || !state.modules || !state.modules.length){
+      try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
+    }
   } else {
     state.modules = [];
   }
 
   if (state.courseId){
-    try { state.course = await getCourse(state.courseId); } catch { state.course = null; }
-    try { state.courseLessons = await getLessons(state.courseId); } catch { state.courseLessons = []; }
+    if (force || !state.course){
+      try { state.course = await getCourse(state.courseId); } catch { state.course = null; }
+    }
+    if (force || !state.courseLessons || !state.courseLessons.length){
+      try { state.courseLessons = await getLessons(state.courseId); } catch { state.courseLessons = []; }
+    }
   } else {
     state.course = null;
     state.courseLessons = [];
   }
+}
+
+function setupNavAndBreadcrumbs(){
+  // Navigation buttons (Back / Prev / Next)
+  const navRow = qs('#lessonNavRow');
+  const backBtn = qs('#backToCourseBtn');
+  const prevBtn = qs('#prevLessonBtn');
+  const nextBtn = qs('#nextLessonBtn');
 
   if (navRow){
     navRow.style.display = state.courseId ? '' : 'none';
@@ -573,13 +583,27 @@ initI18n();
   // Quiz existence (for CTA)
   try { state.hasQuiz = !!(await getQuizByLesson(state.lessonId)); } catch { state.hasQuiz = false; }
 
-  await setupNavAndBreadcrumbs();
+  await loadNavData(true);
+  setupNavAndBreadcrumbs();
+
+  // Update cached course progress (so other pages show badges without extra fetch)
+  if (state.courseId && state.courseLessons && state.courseLessons.length){
+    const total = state.courseLessons.length;
+    const done = state.courseLessons.filter(l => isLessonCompleted(l.lessonId)).length;
+    const meta = {
+      domainId: state.domainId || state.course?.domainId || '',
+      moduleId: state.moduleId || state.course?.moduleId || ''
+    };
+    saveCourseProgress(state.courseId, done, total, meta);
+    upsertCourseMeta(state.courseId, meta);
+  }
 
   render();
   initAiPanel();
 
   async function onLangChange(){
-    await setupNavAndBreadcrumbs();
+    // No API reload on language switch; re-render labels only.
+    setupNavAndBreadcrumbs();
     render();
     try{ initAiPanel(); }catch(e){}
   }

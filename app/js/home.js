@@ -1,7 +1,7 @@
 import './admin-mode.js';
 import { getDomains, getLesson } from './api.js';
 import { qs, renderEmpty, escapeHTML } from './ui.js';
-import { getRecentLessons, getCompletedLessons, loadJSON } from './storage.js';
+import { getRecentLessons, getCompletedLessons, loadJSON, computeDomainProgress } from './storage.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { ensureTopbar } from './layout.js';
 
@@ -15,13 +15,15 @@ function domainCard(domain){
   const name = pickField(domain, 'name') || domain.name || domain.domainId;
   const desc = pickField(domain, 'description') || domain.description || '';
   const icon = domain.icon || 'bx-category';
+  const prog = computeDomainProgress(domain.domainId);
+  const badge = (prog && prog.pct != null) ? `<span class="badge bg-label-success ms-2">${escapeHTML(String(prog.pct))}%</span>` : '';
   return `
     <div class="col-12 col-md-6 col-xl-4">
       <div class="card h-100">
         <div class="card-body">
           <div class="d-flex align-items-center gap-2 mb-2">
             <span class="badge bg-label-primary"><i class="bx ${escapeHTML(icon)}"></i></span>
-            <h5 class="card-title mb-0">${escapeHTML(name)}</h5>
+            <h5 class="card-title mb-0">${escapeHTML(name)}${badge}</h5>
           </div>
           <p class="card-text text-muted mb-3">${escapeHTML(desc)}</p>
           <a class="btn btn-primary" href="modules.html?domainId=${encodeURIComponent(domain.domainId)}">
@@ -163,12 +165,9 @@ initI18n();
 
   // Re-render language-dependent content immediately when language changes (no refresh)
   async function onLangChange(){
-    try { state.domains = await getDomains(); } catch (e) {}
+    // No API reload needed: we already have full objects with multilingual fields.
     renderDomains();
-
-    try { await loadRecentLessonObjects(true); } catch (e) {}
     renderRecent();
-
     try { await setupContinue(); } catch (e) {}
   }
   window.__langChangedHook = onLangChange;

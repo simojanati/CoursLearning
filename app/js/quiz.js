@@ -8,7 +8,31 @@ import { ensureTopbar } from './layout.js';
 const state = {
   lessonId: '',
   quiz: null,
+  // for breadcrumbs / navigation context
+  lesson: null,
+  course: null,
+  domains: [],
+  modules: [],
+  courseId: '',
+  domainId: '',
+  moduleId: ''
 };
+
+async function loadNavData(force=false){
+  // Best-effort loads for breadcrumbs. Avoid re-fetching on language switch.
+  if (force || (state.lessonId && !state.lesson)){
+    try { state.lesson = await getLesson(state.lessonId); } catch { state.lesson = null; }
+  }
+  if (state.courseId && (force || !state.course)){
+    try { state.course = await getCourse(state.courseId); } catch { state.course = null; }
+  }
+  if (force || !Array.isArray(state.domains) || state.domains.length === 0){
+    try { state.domains = await getDomains(); } catch { state.domains = []; }
+  }
+  if (state.domainId && (force || !Array.isArray(state.modules) || state.modules.length === 0)){
+    try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
+  }
+}
 
 function dataLang(){
   const l = document.documentElement.lang || 'fr';
@@ -49,7 +73,7 @@ function restoreAnswers(answers){
   });
 }
 
-function renderQuiz(){
+async function renderQuiz(){
   const titleEl = qs('#quizTitle');
   const emptyEl = qs('#quizEmpty');
   if (!state.lessonId){
@@ -57,15 +81,7 @@ function renderQuiz(){
     return;
   }
 
-  // Load names for breadcrumbs (best-effort)
-  try { state.lesson = await getLesson(state.lessonId); } catch { state.lesson = null; }
-  if (state.courseId){
-    try { state.course = await getCourse(state.courseId); } catch { state.course = null; }
-  }
-  try { state.domains = await getDomains(); } catch { state.domains = []; }
-  if (state.domainId){
-    try { state.modules = await getModules(state.domainId); } catch { state.modules = []; }
-  }
+  // Breadcrumb context is loaded once via loadNavData().
 
   // Back button to lesson
   const backBtn = qs('#backToLessonBtn');
@@ -79,10 +95,10 @@ function renderQuiz(){
 
   const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
   const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
-  const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
-  const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
-  const courseName = state.course ? (pickField(state.course,'title') || '') : '';
-  const lessonName = state.lesson ? (pickField(state.lesson,'title') || state.lesson.title || '') : '';
+  const domainName = domain ? (getField(domain,'name') || domain.domainId) : (state.domainId || '');
+  const moduleName = module ? (getField(module,'title') || module.moduleId) : (state.moduleId || '');
+  const courseName = state.course ? (getField(state.course,'title') || '') : '';
+  const lessonName = state.lesson ? (getField(state.lesson,'title') || state.lesson.title || '') : '';
 
   const bc = [{ label: t('menu.home'), href: 'home.html' }];
   if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
@@ -185,7 +201,7 @@ function bindSubmit(){
 
 async function init(){
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
-initI18n();
+	initI18n();
 
   const sp = new URL(window.location.href).searchParams;
   state.lessonId = sp.get('lessonId') || '';
@@ -206,44 +222,27 @@ initI18n();
     return;
   }
 
-  renderQuiz();
+  await loadNavData(true);
+  await renderQuiz();
   bindSubmit();
 
-  function onLangChange(){
-    // Update breadcrumbs labels
-    const domain = state.domainId ? state.domains.find(d => String(d.domainId) === String(state.domainId)) : null;
-    const module = state.moduleId ? state.modules.find(m => String(m.moduleId) === String(state.moduleId)) : null;
-    const domainName = domain ? (pickField(domain,'name') || domain.domainId) : (state.domainId || '');
-    const moduleName = module ? (pickField(module,'title') || module.moduleId) : (state.moduleId || '');
-    const courseName = state.course ? (pickField(state.course,'title') || '') : '';
-    const lessonName = state.lesson ? (pickField(state.lesson,'title') || state.lesson.title || '') : '';
-    const bc = [{ label: t('menu.home'), href: 'home.html' }];
-    if (domainName) bc.push({ label: domainName, href: `modules.html?domainId=${encodeURIComponent(state.domainId)}` });
-    if (moduleName) bc.push({ label: moduleName, href: `courses.html?domainId=${encodeURIComponent(state.domainId)}&moduleId=${encodeURIComponent(state.moduleId)}` });
-    if (state.courseId) bc.push({ label: courseName || t('page.course'), href: `course.html?courseId=${encodeURIComponent(state.courseId)}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
-    bc.push({ label: lessonName || t('page.lesson'), href: `lesson.html?lessonId=${encodeURIComponent(state.lessonId)}&courseId=${encodeURIComponent(state.courseId||'')}&domainId=${encodeURIComponent(state.domainId||'')}&moduleId=${encodeURIComponent(state.moduleId||'')}` });
-    bc.push({ label: t('page.quiz'), active: true });
-    renderBreadcrumbs(bc);
-
-// preserve current answers when switching language
+  async function onLangChange(){
+    // Do NOT reload data from API on language switch; just re-render.
     const questions = state.quiz?.questions || [];
     const snap = snapshotAnswers(questions);
 
-    // rerender content in the new language (AR UI -> FR content)
-    renderQuiz();
+    await renderQuiz();
     restoreAnswers(snap);
 
-    // update result labels (if already shown)
     const result = qs('#quizResult');
     if (result && !result.classList.contains('d-none')){
-      // keep same pass/fail state but update localized text
       const scoreTxt = qs('#quizScore')?.textContent || '';
       const score = Number(String(scoreTxt).replace('%','')) || 0;
       const passing = (state.quiz?.passingScore || 0);
       const passed = score >= passing;
       qs('#quizResultText').textContent = passed ? t('quiz.passed') : t('quiz.failed');
     }
-}
+  }
 window.__langChangedHook = onLangChange;
 window.addEventListener('lang:changed', onLangChange);
 }

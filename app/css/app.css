@@ -390,3 +390,32 @@ body.lh-loading{ overflow: hidden; }
   .lh-ai-drawer{ width: 100vw; }
   .lh-ai-drawer .ai-chat-messages{ max-height: 50vh; }
 }
+
+
+/* Global search dropdown (topbar) */
+.lh-search-container{ position: relative; }
+.lh-global-search-menu{
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 60vh;
+  overflow: auto;
+  z-index: 2000;
+  padding: .25rem 0;
+}
+.lh-global-search-menu.show{ display: block; }
+.lh-global-search-menu .dropdown-header{ font-size: .75rem; opacity: .7; }
+.lh-global-search-menu .dropdown-item{ white-space: normal; }
+.lh-global-search-menu .lh-search-sub{
+  display: block;
+  font-size: .75rem;
+  opacity: .7;
+  margin-top: .125rem;
+}
+@media (max-width: 575.98px){
+  .lh-global-search-menu{
+    left: -12px;
+    right: -12px;
+  }
+}

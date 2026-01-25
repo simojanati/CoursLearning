@@ -142,6 +142,9 @@ function route_(action, params) {
       return { quiz: quiz, questions: questions };
     }
 
+    case 'search':
+      return search_(params);
+
     case 'health':
       return health_(params);
 
@@ -152,6 +155,125 @@ function route_(action, params) {
     default:
       return { error: 'Unknown action: ' + action };
   }
+}
+
+// -------------------- Global search --------------------
+function search_(params){
+  const qRaw = String(params.q || params.query || '').trim();
+  const q = qRaw.toLowerCase();
+  const limit = Math.max(1, Math.min(50, parseInt(params.limit || '20', 10) || 20));
+  if (!q || q.length < 2){
+    return { domains: [], modules: [], courses: [], lessons: [] };
+  }
+
+  // Load all once for performance
+  const domains = safeGetAll_('Domains');
+  const modules = safeGetAll_('Modules');
+  const courses = safeGetAll_('Courses');
+  const lessons = safeGetAll_('Lessons');
+
+  const domainById = {};
+  domains.forEach(d => { domainById[String(d.domainId)] = d; });
+  const moduleById = {};
+  modules.forEach(m => { moduleById[String(m.moduleId)] = m; });
+  const courseById = {};
+  courses.forEach(c => { courseById[String(c.courseId)] = c; });
+
+  function anyFieldMatch_(obj, keys){
+    for (let i=0;i<keys.length;i++){
+      const v = obj[keys[i]];
+      if (v == null) continue;
+      const s = String(v).toLowerCase();
+      if (s && s.indexOf(q) !== -1) return true;
+    }
+    return false;
+  }
+
+  // Domains
+  const domainMatches = domains
+    .filter(d => anyFieldMatch_(d, ['domainId','name_fr','name_en','name_ar','description_fr','description_en','description_ar']))
+    .slice(0, limit)
+    .map(d => d);
+
+  // Modules (enrich with domainName)
+  const moduleMatches = modules
+    .filter(m => anyFieldMatch_(m, ['moduleId','domainId','title_fr','title_en','title_ar','description_fr','description_en','description_ar']))
+    .slice(0, limit)
+    .map(m => {
+      const d = domainById[String(m.domainId)] || {};
+      return Object.assign({}, m, {
+        domainName_fr: d.name_fr || '',
+        domainName_en: d.name_en || '',
+        domainName_ar: d.name_ar || '',
+        domainName: d.name_fr || d.name_en || d.name_ar || ''
+      });
+    });
+
+  // Courses (enrich with moduleTitle + domainId/name)
+  const courseMatches = courses
+    .filter(c => anyFieldMatch_(c, ['courseId','moduleId','domainId','title_fr','title_en','title_ar','description_fr','description_en','description_ar']))
+    .slice(0, limit)
+    .map(c => {
+      const m = moduleById[String(c.moduleId)] || {};
+      const d = domainById[String(m.domainId || c.domainId)] || {};
+      return Object.assign({}, c, {
+        domainId: String(m.domainId || c.domainId || ''),
+        moduleTitle_fr: m.title_fr || '',
+        moduleTitle_en: m.title_en || '',
+        moduleTitle_ar: m.title_ar || '',
+        moduleTitle: m.title_fr || m.title_en || m.title_ar || '',
+        domainName_fr: d.name_fr || '',
+        domainName_en: d.name_en || '',
+        domainName_ar: d.name_ar || '',
+        domainName: d.name_fr || d.name_en || d.name_ar || ''
+      });
+    });
+
+  // Lessons (enrich with courseTitle + module/domain)
+  const lessonMatches = lessons
+    .filter(l => {
+      // Avoid scanning very long HTML; keep it to title + ids + (optional) first 2000 chars
+      const okTitle = anyFieldMatch_(l, ['lessonId','courseId','title_fr','title_en','title_ar']);
+      if (okTitle) return true;
+      const htmlKeys = ['contentHtml_fr','contentHtml_en','contentHtml_ar'];
+      for (let i=0;i<htmlKeys.length;i++){
+        const v = l[htmlKeys[i]];
+        if (!v) continue;
+        const s = String(v).slice(0, 2000).toLowerCase();
+        if (s.indexOf(q) !== -1) return true;
+      }
+      return false;
+    })
+    .slice(0, limit)
+    .map(l => {
+      const c = courseById[String(l.courseId)] || {};
+      const m = moduleById[String(c.moduleId)] || {};
+      const d = domainById[String(m.domainId || c.domainId)] || {};
+      return Object.assign({}, l, {
+        courseTitle_fr: c.title_fr || '',
+        courseTitle_en: c.title_en || '',
+        courseTitle_ar: c.title_ar || '',
+        courseTitle: c.title_fr || c.title_en || c.title_ar || '',
+        moduleId: String(m.moduleId || c.moduleId || ''),
+        domainId: String(m.domainId || c.domainId || ''),
+        moduleTitle_fr: m.title_fr || '',
+        moduleTitle_en: m.title_en || '',
+        moduleTitle_ar: m.title_ar || '',
+        moduleTitle: m.title_fr || m.title_en || m.title_ar || '',
+        domainName_fr: d.name_fr || '',
+        domainName_en: d.name_en || '',
+        domainName_ar: d.name_ar || '',
+        domainName: d.name_fr || d.name_en || d.name_ar || ''
+      });
+    });
+
+  return {
+    q: qRaw,
+    domains: domainMatches,
+    modules: moduleMatches,
+    courses: courseMatches,
+    lessons: lessonMatches
+  };
 }
 
 
