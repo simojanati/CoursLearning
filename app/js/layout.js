@@ -1,4 +1,5 @@
 import { initGlobalSearch } from './global-search.js';
+import { bindThemeToggle, initTheme } from './theme.js';
 /**
  * Shared layout loader (topbar injection) to avoid duplicating navbar markup.
  *
@@ -54,6 +55,13 @@ export async function ensureTopbar(options = {}){
       initGlobalSearch({ input: searchInput, menu });
 
     }
+
+    // Theme toggle (shared across pages)
+    try {
+      initTheme();
+      const themeBtn = mount.querySelector('#lhThemeToggle');
+      if (themeBtn) bindThemeToggle(themeBtn);
+    } catch (e) {}
 
     // Notify page scripts that topbar is ready
     window.dispatchEvent(new CustomEvent('lh:topbar:ready', { detail: { showSearch } }));

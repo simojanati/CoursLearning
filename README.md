@@ -182,3 +182,32 @@ Create a sheet named `platform_settings` to override branding.
 - `app_name`, `tagline_fr`, `tagline_en`, `tagline_ar`, `footer_fr`, `footer_en`, `footer_ar`, `logo_url`, `icon_url`, `primary_color`
 
 If the sheet is missing, defaults are used.
+
+---
+
+## Landing illustration (Gemini prompts)
+
+فـ `index.html` كاين illustration فـ:
+
+`assets/img/illustrations/learnhub-hero.png`
+
+تقدر تعوّضها بواحد الصورة مولّدة (PNG) باش تولّي الواجهة Pro.
+
+### مواصفات الصورة المفضلة
+- PNG (مزيان إلا كانت transparent background)
+- 1200×800 ولا 1400×900
+- Style: modern SaaS / clean / soft gradients
+- ألوان: أبيض + رمادي فاتح + Accent اللون `#696cff`
+
+### Prompts جاهزين (حطهم فـ Gemini)
+
+**Prompt 1 (SaaS hero illustration):**
+> Modern SaaS hero illustration for an e-learning web app called LearnHub. Show a laptop with learning cards, progress bars, checkmarks, and a quiz badge. Clean minimalist style, soft gradients, white background, accent color #696cff, no text, no logos, high resolution, PNG transparent background.
+
+**Prompt 2 (Flat vector, clean):**
+> Flat vector illustration for an e-learning platform. A person studying on a laptop with course cards and a progress dashboard UI. Minimal, clean, modern, white background, subtle shadows, accent #696cff, no text, no watermark, PNG with transparent background.
+
+**Prompt 3 (Isometric):**
+> Isometric illustration of an e-learning dashboard with modules, lessons, quiz, and progress tracking. Bright and clean, white background, soft purple accent (#696cff), minimal details, no text, no logos, high resolution PNG.
+
+**بعد ما تولّد الصورة:** سميها `learnhub-hero.png` وبدّل الملف اللي فـ `assets/img/illustrations/`.

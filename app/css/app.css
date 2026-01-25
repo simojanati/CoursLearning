@@ -31,12 +31,7 @@
 .rtl { direction: rtl; font-family: "Cairo", "Public Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 .ltr { direction: ltr; }
 
-.rtl .layout-menu { left: auto !important; right: 0 !important; }
-.rtl .layout-page { margin-left: 0 !important; margin-right: 16.25rem !important; }
 
-@media (max-width: 1199.98px){
-  .rtl .layout-page { margin-right: 0 !important; }
-}
 
 /* Swap common spacing utilities (minimal set for our pages) */
 .rtl .ms-auto { margin-left: 0 !important; margin-right: auto !important; }
@@ -51,114 +46,45 @@
 }
 
 
-/* RTL FIX v2 */
-html[dir="rtl"] {
-  direction: rtl;
-}
 
-/* Place the sidebar on the RIGHT in RTL */
+/* === RTL (Arabic UI) === */
+html[dir="rtl"] { direction: rtl; }
+html[dir="rtl"] body { font-family: "Cairo", "Public Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+/* RTL: sidebar on the RIGHT (natural RTL) */
 html[dir="rtl"].layout-menu-fixed .layout-menu,
 html[dir="rtl"].layout-menu-fixed-offcanvas .layout-menu {
-  left: auto !important;
   right: 0 !important;
+  left: auto !important;
 }
 
-/* Shift the page content to the LEFT (padding-right instead of padding-left) */
+/* Desktop spacing (RTL): pad from the RIGHT, match menu width */
 @media (min-width: 1200px) {
   html[dir="rtl"].layout-menu-fixed:not(.layout-menu-collapsed) .layout-page,
   html[dir="rtl"].layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
-    padding-left: 0 !important;
     padding-right: 16.25rem !important;
+    padding-left: 0 !important;
   }
-}
-
-/* When menu is collapsed, keep spacing on the right */
-@media (min-width: 1200px) {
   html[dir="rtl"].layout-menu-fixed.layout-menu-collapsed .layout-page,
   html[dir="rtl"].layout-menu-fixed-offcanvas.layout-menu-collapsed .layout-page {
-    padding-left: 0 !important;
     padding-right: 5.25rem !important;
-  }
-}
-
-/* Navbar / detached navbar alignment */
-html[dir="rtl"] .layout-navbar {
-  left: 0;
-  right: 0;
-}
-
-/* Menu icon spacing */
-html[dir="rtl"] .menu-icon {
-  margin-right: 0 !important;
-  margin-left: 0.5rem !important;
-}
-
-/* Submenu indentation: flip paddings */
-html[dir="rtl"] .menu-vertical .menu-sub .menu-link {
-  padding-left: 0 !important;
-  padding-right: 2.25rem !important;
-}
-html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-link {
-  padding-left: 0 !important;
-  padding-right: 2.9rem !important;
-}
-html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-sub .menu-link {
-  padding-left: 0 !important;
-  padding-right: 3.55rem !important;
-}
-
-/* Text alignment helpers (Bootstrap) */
-html[dir="rtl"] .text-end {
-  text-align: left !important;
-}
-html[dir="rtl"] .text-start {
-  text-align: right !important;
-}
-
-/* Offcanvas / small screens: ensure menu slides from the right */
-@media (max-width: 1199.98px) {
-  html[dir="rtl"].layout-menu-fixed-offcanvas .layout-menu {
-    right: 0 !important;
-    left: auto !important;
-  }
-  html[dir="rtl"] .layout-page {
-    padding-right: 0 !important;
     padding-left: 0 !important;
   }
 }
 
-
-/* === RTL (Arabic UI) - Sneat layout overrides === */
-html[dir="rtl"] body { font-family: "Cairo", "Public Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-
-html[dir="rtl"] .layout-menu { left: auto !important; right: 0 !important; }
-html[dir="rtl"] .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page,
-html[dir="rtl"] .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page{
-  padding-left: 0 !important;
-  padding-right: 16.25rem !important;
-}
-
-/* Desktop: if menu is collapsed, keep page aligned */
-html[dir="rtl"].layout-menu-collapsed .layout-page,
-html[dir="rtl"] .layout-menu-collapsed .layout-page{
-  padding-right: 0 !important;
-}
-
-/* Mobile/tablet offcanvas: hidden to the RIGHT by default */
-@media (max-width: 1199.98px){
-  html[dir="rtl"] .layout-menu{
-    left: auto !important;
-    right: 0 !important;
-    transform: translate3d(100%, 0, 0) !important;
-  }
-  html[dir="rtl"].layout-menu-expanded .layout-menu{
-    transform: translate3d(0, 0, 0) !important;
-  }
-  /* Make sure content is full width when menu is hidden */
-  html[dir="rtl"] .layout-page{
+/* Mobile/tablet: full width content when offcanvas is hidden */
+@media (max-width: 1199.98px) {
+  html[dir="rtl"] .layout-page {
+    padding-left: 0 !important;
     padding-right: 0 !important;
   }
 }
+
+/* Submenu indentation (RTL-friendly) */
+html[dir="rtl"] .menu-icon { margin-right: 0 !important; margin-left: 0.5rem !important; }
+html[dir="rtl"] .menu-vertical .menu-sub .menu-link { padding-left: 0 !important; padding-right: 2.25rem !important; }
+html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-link { padding-left: 0 !important; padding-right: 2.9rem !important; }
+html[dir="rtl"] .menu-vertical .menu-sub .menu-sub .menu-sub .menu-link { padding-left: 0 !important; padding-right: 3.55rem !important; }
 
 /* Utility swaps for RTL */
 html[dir="rtl"] .ms-auto { margin-left: 0 !important; margin-right: auto !important; }
@@ -166,30 +92,7 @@ html[dir="rtl"] .ms-1 { margin-left: 0 !important; margin-right: .25rem !importa
 html[dir="rtl"] .me-2 { margin-right: 0 !important; margin-left: .5rem !important; }
 html[dir="rtl"] .me-3 { margin-right: 0 !important; margin-left: 1rem !important; }
 html[dir="rtl"] .text-end { text-align: left !important; }
-
-
-
-/* RTL: put the menu toggle (close button) on the LEFT side inside the right-side menu */
-html[dir="rtl"] .layout-menu .app-brand { flex-direction: row-reverse !important; }
-html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle { margin: 0 !important; }
-html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle i { transform: rotate(180deg); }
-
-
-
-/* RTL: put menu toggle on the LEFT inside the menu header */
-html[dir="rtl"] .layout-menu .app-brand {
-  flex-direction: row-reverse !important;
-  justify-content: space-between !important;
-}
-html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-html[dir="rtl"] .layout-menu .app-brand .layout-menu-toggle.menu-link {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
+html[dir="rtl"] .text-start { text-align: right !important; }
 
 /* RTL FIX: force menu close/toggle button to the LEFT inside the side menu header */
 html[dir="rtl"] .layout-menu .app-brand {
@@ -279,10 +182,10 @@ html[dir="rtl"] #layout-navbar #navbar-collapse > .navbar-nav.align-items-center
   margin-right: 0 !important;
 }
 
-/* Inside the action group: Profile far-left, Language to its right */
-/* RTL navbar actions order: Language then Profile (leftmost) */
-html[dir="rtl"] .lh-lang-item{ order: 1; }
-html[dir="rtl"] .lh-profile-item{ order: 2; }
+/* Inside the action group (RTL): Profile far-left, Language next, Theme at the far right */
+html[dir="rtl"] .lh-theme-item{ order: 1; }
+html[dir="rtl"] .lh-lang-item{ order: 2; }
+html[dir="rtl"] .lh-profile-item{ order: 3; }
 
 /* In RTL, force the language dropdown to open inward (to the right) */
 html[dir="rtl"] .lang-dropdown-menu{
@@ -386,6 +289,49 @@ body.lh-loading{ overflow: hidden; }
 .lh-ai-drawer .ai-chat-messages{ max-height: 52vh; }
 .lh-ai-drawer .offcanvas-body{ display:flex; flex-direction:column; }
 .lh-ai-drawer .ai-chat{ flex:1 1 auto; }
+
+/* Selection -> Ask AI floating button */
+.lh-ai-selection-btn{
+  position: fixed;
+  z-index: 3000;
+  display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+.lh-ai-selection-btn.show{ display: inline-flex; }
+
+/* "typing" indicator inside chat */
+.ai-typing{
+  display:flex;
+  justify-content:flex-start;
+  margin: .35rem 0;
+}
+.ai-typing .ai-bubble{
+  background: rgba(67, 89, 113, 0.08);
+  color: rgba(67, 89, 113, 0.9);
+  border-radius: 14px;
+  padding: .6rem .75rem;
+  width: fit-content;
+}
+.ai-typing .dots{
+  display:inline-flex;
+  gap: 6px;
+  align-items:center;
+}
+.ai-typing .dots span{
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .35;
+  animation: lhDot 1.2s infinite;
+}
+.ai-typing .dots span:nth-child(2){ animation-delay: .15s; }
+.ai-typing .dots span:nth-child(3){ animation-delay: .3s; }
+@keyframes lhDot{
+  0%, 60%, 100%{ transform: translateY(0); opacity: .25; }
+  30%{ transform: translateY(-3px); opacity: .75; }
+}
+
 @media (max-width: 576px){
   .lh-ai-drawer{ width: 100vw; }
   .lh-ai-drawer .ai-chat-messages{ max-height: 50vh; }
@@ -418,4 +364,212 @@ body.lh-loading{ overflow: hidden; }
     left: -12px;
     right: -12px;
   }
+}
+
+/* ==============================
+   Dark theme (applied via html[data-lh-theme="dark"])
+   ============================== */
+html[data-lh-theme="dark"] body{ background: #0b1020 !important; color: rgba(226,232,240,0.92); }
+html[data-lh-theme="dark"] .text-muted{ color: rgba(203,213,225,0.72) !important; }
+
+/* Surfaces */
+html[data-lh-theme="dark"] .card,
+html[data-lh-theme="dark"] .modal-content,
+html[data-lh-theme="dark"] .dropdown-menu,
+html[data-lh-theme="dark"] .hero-illustration{ background: #111827 !important; }
+html[data-lh-theme="dark"] .card,
+html[data-lh-theme="dark"] .modal-content,
+html[data-lh-theme="dark"] .dropdown-menu,
+html[data-lh-theme="dark"] .hero-illustration,
+html[data-lh-theme="dark"] .feature-tile{ border-color: rgba(148,163,184,0.18) !important; }
+
+/* Feature tiles (landing) */
+html[data-lh-theme="dark"] .feature-tile{ background: #0b1224 !important; }
+
+
+/* Navbar + sidebar */
+html[data-lh-theme="dark"] .bg-navbar-theme,
+html[data-lh-theme="dark"] .navbar.bg-white{ background: #111827 !important; border-color: rgba(148,163,184,0.18) !important; }
+html[data-lh-theme="dark"] .bg-menu-theme{ background: #0f172a !important; }
+html[data-lh-theme="dark"] .menu-link,
+html[data-lh-theme="dark"] .app-brand-text,
+html[data-lh-theme="dark"] .navbar .navbar-brand,
+html[data-lh-theme="dark"] .dropdown-item{ color: rgba(226,232,240,0.92) !important; }
+html[data-lh-theme="dark"] .menu-item.active > .menu-link{ background: rgba(105,108,255,0.18) !important; }
+html[data-lh-theme="dark"] .dropdown-item:hover{ background: rgba(148,163,184,0.12) !important; }
+html[data-lh-theme="dark"] .dropdown-divider{ border-top-color: rgba(148,163,184,0.18) !important; }
+
+
+/* Inputs */
+html[data-lh-theme="dark"] .form-control,
+html[data-lh-theme="dark"] .form-select{
+  background-color: #0b1224 !important;
+  border-color: rgba(148,163,184,0.22) !important;
+  color: rgba(226,232,240,0.92) !important;
+}
+html[data-lh-theme="dark"] .form-control::placeholder{ color: rgba(203,213,225,0.5) !important; }
+html[data-lh-theme="dark"] .lh-search-container{ background: transparent; }
+
+/* Landing page specific */
+html[data-lh-theme="dark"] .landing-shell{
+  /* Keep landing background FLAT in dark (no gradients) */
+  background: #0b1020 !important;
+}
+
+html[data-lh-theme="dark"] .landing-card{ background: rgba(17,24,39,0.85) !important; }
+html[data-lh-theme="dark"] .landing-footer,
+html[data-lh-theme="dark"] .bg-footer-theme{
+  background: #0f172a !important;
+  border-color: rgba(148,163,184,0.18) !important;
+}
+html[data-lh-theme="dark"] .landing-footer .text-muted,
+html[data-lh-theme="dark"] .bg-footer-theme .text-muted{ color: rgba(203,213,225,0.72) !important; }
+
+html[data-lh-theme="dark"] .hero-carousel img{ background: #0b1224 !important; }
+
+/* Loader overlay */
+html[data-lh-theme="dark"] #lhGlobalLoader.lh-loader{ background: rgba(15,23,42,.55); }
+
+/* Dark theme polish: landing slider stays white + AI drawer surfaces */
+html[data-lh-theme="dark"] .hero-illustration{ background: #ffffff !important; }
+html[data-lh-theme="dark"] .hero-carousel img{ background: #ffffff !important; }
+
+/* Offcanvas (AI drawer) */
+html[data-lh-theme="dark"] .offcanvas{ background: #111827 !important; color: rgba(226,232,240,0.92) !important; }
+html[data-lh-theme="dark"] .offcanvas .offcanvas-header{ border-bottom: 1px solid rgba(148,163,184,0.18) !important; }
+html[data-lh-theme="dark"] .offcanvas .offcanvas-body{ color: rgba(226,232,240,0.92) !important; }
+html[data-lh-theme="dark"] .offcanvas .btn-close{ filter: invert(1) grayscale(100%); opacity: .85; }
+
+html[data-lh-theme="dark"] .ai-chat-messages{ background: #0b1224 !important; border-color: rgba(148,163,184,0.22) !important; }
+html[data-lh-theme="dark"] .ai-msg.assistant .ai-bubble{ background: #0b1224 !important; border-color: rgba(148,163,184,0.22) !important; color: rgba(226,232,240,0.92) !important; }
+html[data-lh-theme="dark"] .ai-msg.user .ai-bubble{ color: rgba(226,232,240,0.92) !important; }
+html[data-lh-theme="dark"] .ai-typing .ai-bubble{ background: #0b1224 !important; border-color: rgba(148,163,184,0.22) !important; color: rgba(226,232,240,0.92) !important; }
+
+/* Footers */
+html[data-lh-theme="dark"] .content-footer,
+html[data-lh-theme="dark"] footer{ border-color: rgba(148,163,184,0.18) !important; }
+html[data-lh-theme="dark"] footer.bg-footer-theme,
+html[data-lh-theme="dark"] .content-footer{ background: #0f172a !important; }
+
+/* ==========================================================
+   Landing page (index.html) — keep CSS in app.css only
+   ========================================================== */
+
+body.landing-shell{ background: #f6f7fb; }
+.landing-shell{
+  background:
+    radial-gradient(900px 400px at 15% 10%, rgba(105, 108, 255, 0.10), transparent 60%),
+    radial-gradient(700px 350px at 85% 30%, rgba(3, 195, 236, 0.08), transparent 60%);
+}
+
+.landing-hero{ padding: 5rem 0 3rem; }
+.lh-brand-icon{ width: 28px; height: 28px; }
+.lh-brand-logo{ height: 30px; width: auto; }
+
+.feature-tile{
+  border: 1px solid rgba(67, 89, 113, 0.12);
+  border-radius: 0.75rem;
+  height: 100%;
+  background: #fff;
+}
+.feature-tile .badge{
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+}
+.feature-tile .feature-text{ line-height: 1.25; }
+
+.landing-footer{ padding: 2rem 0; }
+.lang-pill{ cursor: pointer; }
+
+.landing-card{
+  border: 1px solid rgba(67, 89, 113, 0.12);
+  border-radius: 1rem;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(6px);
+}
+
+.hero-illustration{
+  border: 1px solid rgba(67, 89, 113, 0.12);
+  border-radius: 1rem;
+  background: rgba(255,255,255,0.9);
+  overflow: hidden;
+}
+.hero-illustration img{ width: 100%; display: block; }
+
+/* Carousel sizing (keep visuals consistent) */
+.hero-carousel img{ height: 360px; object-fit: contain; background: #fff; }
+@media (max-width: 575.98px){
+  .hero-carousel img{ height: 240px; }
+  .hero-carousel .carousel-control-prev,
+  .hero-carousel .carousel-control-next{ width: 18%; }
+}
+
+.tools-dropdown .dropdown-menu{ min-width: 12rem; }
+.hero-badges .badge{ border-radius: 999px; padding: 0.5rem 0.75rem; }
+.hero-title{ font-size: 2.6rem; line-height: 1.15; letter-spacing: -0.02em; }
+.hero-subtitle{ max-width: 44rem; }
+
+/* Mobile polish: breathing room so text/buttons don't touch edges */
+@media (max-width: 575.98px){
+  .navbar .container, main.container, footer .container{ padding-left: 1rem !important; padding-right: 1rem !important; }
+  .landing-hero{ padding: 2.75rem 0 2rem; }
+  .lh-brand-logo{ height: 24px; }
+  .navbar .btn{ padding: 0.5rem 0.75rem; }
+  .navbar .dropdown-toggle{ padding: 0.5rem 0.65rem; }
+  .hero-ctas .btn{ width: 100%; }
+  .hero-ctas{ gap: 0.75rem !important; }
+  .hero-title{ font-size: 1.75rem; line-height: 1.25; }
+  .hero-subtitle{ font-size: 1rem !important; }
+}
+
+/* Landing dark overrides */
+html[data-lh-theme="dark"] body.landing-shell{ background: #0b1020 !important; }
+/* landing-shell itself is forced flat earlier in dark section */
+html[data-lh-theme="dark"] .landing-card{
+  background: rgba(17,24,39,0.88) !important;
+  border-color: rgba(148,163,184,0.18) !important;
+}
+html[data-lh-theme="dark"] .landing-card,
+html[data-lh-theme="dark"] .landing-card h1,
+html[data-lh-theme="dark"] .landing-card h5,
+html[data-lh-theme="dark"] .landing-card .fw-semibold{
+  color: rgba(255,255,255,0.92) !important;
+}
+html[data-lh-theme="dark"] .landing-card .text-muted{ color: rgba(226,232,240,0.78) !important; }
+html[data-lh-theme="dark"] .feature-tile{
+  background: #0b1224 !important;
+  border-color: rgba(148,163,184,0.18) !important;
+}
+/* Keep slider area white in dark (images are white) */
+html[data-lh-theme="dark"] .hero-illustration,
+html[data-lh-theme="dark"] .hero-carousel img{ background: #ffffff !important; }
+
+/* Landing navbar in dark */
+html[data-lh-theme="dark"] .landing-nav{
+  background: #0f172a !important;
+  border-color: rgba(148,163,184,0.18) !important;
+}
+
+
+
+/* --- Dark overrides for mobile table-cards (avoid white cards) --- */
+@media (max-width: 768px){
+  html[data-lh-theme="dark"] table.lh-table-cards tbody tr{
+    background: #111827 !important;
+    border-color: rgba(148,163,184,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  }
+  html[data-lh-theme="dark"] table.lh-table-cards tbody td::before{
+    color: rgba(203,213,225,0.72) !important;
+  }
+}
+
+/* Landing: keep the hero carousel white even in dark (images have white background) */
+html[data-lh-theme="dark"] .hero-carousel.hero-illustration{
+  background: #fff !important;
+  border-color: rgba(148,163,184,0.12) !important;
 }

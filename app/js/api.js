@@ -278,3 +278,19 @@ export async function searchAll(q, limit=20){
     lessons: data.lessons || [],
   };
 }
+
+
+// -------------------- Authoring (Domains/Modules/Courses) --------------------
+export async function upsertEntity(entity, data){
+  if (!entity) throw new Error('Missing entity');
+  if (!data) throw new Error('Missing data');
+  const payload = await apiCall('upsert', { entity: String(entity), data: JSON.stringify(data) });
+  return payload;
+}
+
+export async function deleteEntity(entity, id){
+  if (!entity) throw new Error('Missing entity');
+  if (!id) throw new Error('Missing id');
+  const payload = await apiCall('delete', { entity: String(entity), id: String(id) });
+  return payload;
+}

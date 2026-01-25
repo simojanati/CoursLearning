@@ -336,6 +336,23 @@ function setAiStatus(txt, isError=false){
   el.classList.toggle('text-muted', !isError);
 }
 
+function showAiTyping(){
+  const box = qs('#aiMessages');
+  if (!box) return;
+  if (qs('#aiTyping')) return;
+  const el = document.createElement('div');
+  el.id = 'aiTyping';
+  el.className = 'ai-typing';
+  el.innerHTML = `<div class="ai-bubble"><span class="dots"><span></span><span></span><span></span></span></div>`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function hideAiTyping(){
+  const el = qs('#aiTyping');
+  if (el) el.remove();
+}
+
 function getUiLang(){
   try { return (localStorage.getItem('learnHub:lang') || localStorage.getItem('vbaEco:lang') || localStorage.getItem('lang') || 'fr'); } catch { return 'fr'; }
 }
@@ -378,6 +395,20 @@ function quickPrompt(kind, lang){
     }
   };
   return (map[kind] && (map[kind][l] || map[kind].fr)) || '';
+}
+
+function selectionPrompt(lang, selectionText){
+  const l = String(lang || 'fr');
+  const s0 = String(selectionText || '').trim();
+  if (!s0) return '';
+  const s = s0.replace(/\s+/g, ' ').trim();
+  const map = {
+    fr: (t) => `Explique cet extrait et donne un exemple si possible :\n\n“${t}”`,
+    en: (t) => `Explain this excerpt and provide an example if possible:\n\n“${t}”`,
+    ar: (t) => `اشرح هذا المقتطف وقدّم مثالاً إن أمكن:\n\n“${t}”`
+  };
+  const fn = map[l] || map.fr;
+  return fn(s);
 }
 
 function initAiPanel(){
@@ -457,6 +488,9 @@ function initAiPanel(){
     if (firstBind) clearBtn.addEventListener('click', () => {
       clearAiChat(state.lessonId);
       renderAiMessages([]);
+      hideAiTyping();
+      try { if (input) input.disabled = false; } catch {}
+      try { const sb = qs('#aiSendBtn'); if (sb) sb.disabled = false; } catch {}
       setAiStatus('');
     });
   }
@@ -484,6 +518,10 @@ function initAiPanel(){
 
     if (!overrideText && input) input.value = '';
     setAiStatus(t('ai.thinking'), false);
+    hideAiTyping();
+    showAiTyping();
+    try { if (input) input.disabled = true; } catch {}
+    try { if (sendBtn) sendBtn.disabled = true; } catch {}
 
     try {
       const res = await aiChat({
@@ -502,8 +540,14 @@ function initAiPanel(){
       msgs.push({ role:'assistant', text:String(answer), mode: mode, ts: Date.now() });
       saveAiChat(state.lessonId, msgs);
       renderAiMessages(msgs);
+      hideAiTyping();
+      try { if (input) input.disabled = false; } catch {}
+      try { if (sendBtn) sendBtn.disabled = false; } catch {}
       setAiStatus('');
     } catch (e){
+      hideAiTyping();
+      try { if (input) input.disabled = false; } catch {}
+      try { if (sendBtn) sendBtn.disabled = false; } catch {}
             const msg = String(e?.message || e);
       if (msg.includes('AI_NOT_CONFIGURED')){
         setAiStatus(t('ai.notConfigured'), true);
@@ -519,6 +563,20 @@ function initAiPanel(){
 
   const sendBtn = qs('#aiSendBtn');
   if (sendBtn && firstBind) sendBtn.addEventListener('click', () => send());
+
+  // Expose a small API so other UX helpers (selection button) can open and send.
+  if (!off.__lhAiApi){
+    off.__lhAiApi = {
+      open: () => {
+        try { bootstrap.Offcanvas.getOrCreateInstance(off).show(); } catch(e) {}
+      },
+      openAndSend: (text) => {
+        try { bootstrap.Offcanvas.getOrCreateInstance(off).show(); } catch(e) {}
+        // Small delay so the UI feels smooth.
+        setTimeout(() => send(String(text || '')), 60);
+      }
+    };
+  }
   if (input){
     if (firstBind) input.addEventListener('keydown', (ev) => {
       if (ev.ctrlKey && ev.key === 'Enter'){
@@ -536,6 +594,89 @@ function initAiPanel(){
   if (qSum && firstBind) qSum.addEventListener('click', () => send(quickPrompt('summary', getUiLang())));
   if (qSimple && firstBind) qSimple.addEventListener('click', () => send(quickPrompt('simple', getUiLang())));
   if (qQ && firstBind) qQ.addEventListener('click', () => send(quickPrompt('questions', getUiLang())));
+}
+
+// Show a floating "Ask AI" button when user selects text inside the lesson content.
+function initAiSelection(){
+  const root = qs('#lessonContent');
+  const selBtn = qs('#aiSelectionBtn');
+  const off = qs('#aiOffcanvas');
+  if (!root || !selBtn || !off) return;
+  if (selBtn.__lhBound) {
+    // update title on language change
+    selBtn.title = t('ai.askSelection.hint');
+    return;
+  }
+  selBtn.__lhBound = true;
+
+  selBtn.title = t('ai.askSelection.hint');
+
+  const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const PAD = 8;
+
+  function hide(){
+    selBtn.classList.remove('show');
+  }
+
+  function getSelectionInRoot(){
+    const sel = window.getSelection && window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const txt = String(sel.toString() || '').trim();
+    if (!txt || txt.length < 8) return null;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const el = node.nodeType === 1 ? node : node.parentElement;
+    if (!el || !root.contains(el)) return null;
+    const rect = range.getBoundingClientRect();
+    if (!rect || (rect.width === 0 && rect.height === 0)) return null;
+    return { txt, rect };
+  }
+
+  function position(rect){
+    // Prefer above selection; if not enough space, place below.
+    let top = rect.top - 44;
+    if (top < 68) top = rect.bottom + 10;
+    const anchorX = isRtl ? rect.left : rect.right;
+    const approxW = 150;
+    const left = clamp(anchorX - (isRtl ? approxW : 0), PAD, window.innerWidth - approxW - PAD);
+    selBtn.style.left = `${left}px`;
+    selBtn.style.top = `${clamp(top, PAD, window.innerHeight - 60)}px`;
+  }
+
+  function onSelect(){
+    const data = getSelectionInRoot();
+    if (!data) { hide(); return; }
+    position(data.rect);
+    selBtn.classList.add('show');
+  }
+
+  // Bind selection events
+  root.addEventListener('mouseup', () => setTimeout(onSelect, 0));
+  root.addEventListener('touchend', () => setTimeout(onSelect, 0), { passive: true });
+  document.addEventListener('scroll', hide, true);
+  document.addEventListener('mousedown', (e) => {
+    if (!selBtn.contains(e.target)) hide();
+  }, true);
+
+  selBtn.addEventListener('click', () => {
+    const data = getSelectionInRoot();
+    hide();
+    if (!data) return;
+    const lang = getUiLang();
+    // keep it short to avoid token/char limits
+    const excerpt = String(data.txt).slice(0, 650);
+    const prompt = selectionPrompt(lang, excerpt);
+    try {
+      const api = off.__lhAiApi;
+      if (api && api.openAndSend) api.openAndSend(prompt);
+      else {
+        try { bootstrap.Offcanvas.getOrCreateInstance(off).show(); } catch(e) {}
+      }
+    } finally {
+      try { const sel = window.getSelection(); sel && sel.removeAllRanges(); } catch(e) {}
+    }
+  });
 }
 
 async function init(){
@@ -600,12 +741,14 @@ initI18n();
 
   render();
   initAiPanel();
+  initAiSelection();
 
   async function onLangChange(){
     // No API reload on language switch; re-render labels only.
     setupNavAndBreadcrumbs();
     render();
     try{ initAiPanel(); }catch(e){}
+    try{ initAiSelection(); }catch(e){}
   }
 window.__langChangedHook = onLangChange;
 window.addEventListener('lang:changed', onLangChange);

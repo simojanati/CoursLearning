@@ -2,7 +2,7 @@ import './admin-mode.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { qs, escapeHTML } from './ui.js';
 import { sanitizeHtml, buildLessonHtml } from './authoring-tools.js';
-import { getLesson, getQuizByLesson } from './api.js';
+import { getLesson, getQuizByLesson, getDomains, getModules, getCourses, upsertEntity, deleteEntity } from './api.js';
 import { ensureTopbar } from './layout.js';
 
 function copyFrom(selector){
@@ -234,9 +234,331 @@ async function validateLessonRow(lessonId){
   out.innerHTML = items.join('');
 }
 
+// ---------------- Content Manager (Domains/Modules/Courses) ----------------
+const CM = {
+  entity: 'Domains',
+  domains: [],
+  modules: [],
+  courses: [],
+  editing: null, // {entity, mode, data}
+};
+
+function cmMsg(kind, text){
+  const el = qs('#cmMsg');
+  if (!el) return;
+  const cls = kind === 'ok' ? 'success' : kind === 'warn' ? 'warning' : 'danger';
+  el.innerHTML = text ? `<div class="alert alert-${cls} py-2 mb-0">${escapeHTML(text)}</div>` : '';
+}
+
+function cmTitleFor(obj){
+  return pickField(obj, 'name', 'title') || obj?.name_fr || obj?.title_fr || obj?.name_en || obj?.title_en || '';
+}
+
+function cmSortByOrderThenId(list, idKey){
+  return [...(list||[])].sort((a,b)=>{
+    const ao = Number(a?.order); const bo = Number(b?.order);
+    const aHas = Number.isFinite(ao); const bHas = Number.isFinite(bo);
+    if (aHas && bHas && ao !== bo) return ao - bo;
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    return String(a?.[idKey]||'').localeCompare(String(b?.[idKey]||''));
+  });
+}
+
+function renderDomains(){
+  const tb = qs('#cmDomainsTbody');
+  if (!tb) return;
+  const rows = cmSortByOrderThenId(CM.domains, 'domainId').map(d => {
+    const id = escapeHTML(String(d.domainId||''));
+    const title = escapeHTML(cmTitleFor(d));
+    const order = escapeHTML(String(d.order ?? ''));
+    return `
+      <tr>
+        <td data-label="ID"><span class="fw-semibold">${id}</span></td>
+        <td data-label="${escapeHTML(t('author.cm.col.title'))}">${title}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.order'))}">${order || '—'}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.actions'))}">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary" data-cm-edit="Domains" data-cm-id="${id}"><i class="bx bx-edit"></i> ${escapeHTML(t('author.cm.edit'))}</button>
+            <button class="btn btn-sm btn-outline-danger" data-cm-del="Domains" data-cm-id="${id}"><i class="bx bx-trash"></i> ${escapeHTML(t('author.cm.delete'))}</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  tb.innerHTML = rows.join('') || `<tr><td colspan="4" class="text-muted">${escapeHTML(t('common.empty'))}</td></tr>`;
+}
+
+function renderModules(){
+  const tb = qs('#cmModulesTbody');
+  if (!tb) return;
+  const domainNameById = {};
+  CM.domains.forEach(d => { domainNameById[String(d.domainId)] = cmTitleFor(d); });
+
+  const rows = cmSortByOrderThenId(CM.modules, 'moduleId').map(m => {
+    const id = escapeHTML(String(m.moduleId||''));
+    const parent = escapeHTML(domainNameById[String(m.domainId)] || String(m.domainId||''));
+    const title = escapeHTML(cmTitleFor(m));
+    const order = escapeHTML(String(m.order ?? ''));
+    return `
+      <tr>
+        <td data-label="ID"><span class="fw-semibold">${id}</span></td>
+        <td data-label="${escapeHTML(t('author.cm.col.parent'))}">${parent}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.title'))}">${title}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.order'))}">${order || '—'}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.actions'))}">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary" data-cm-edit="Modules" data-cm-id="${id}"><i class="bx bx-edit"></i> ${escapeHTML(t('author.cm.edit'))}</button>
+            <button class="btn btn-sm btn-outline-danger" data-cm-del="Modules" data-cm-id="${id}"><i class="bx bx-trash"></i> ${escapeHTML(t('author.cm.delete'))}</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  tb.innerHTML = rows.join('') || `<tr><td colspan="5" class="text-muted">${escapeHTML(t('common.empty'))}</td></tr>`;
+}
+
+function renderCourses(){
+  const tb = qs('#cmCoursesTbody');
+  if (!tb) return;
+  const moduleNameById = {};
+  CM.modules.forEach(m => { moduleNameById[String(m.moduleId)] = cmTitleFor(m); });
+
+  const rows = cmSortByOrderThenId(CM.courses, 'courseId').map(c => {
+    const id = escapeHTML(String(c.courseId||''));
+    const parent = escapeHTML(moduleNameById[String(c.moduleId)] || String(c.moduleId||''));
+    const title = escapeHTML(cmTitleFor(c));
+    const level = escapeHTML(String(c.level||'')) || '—';
+    const order = escapeHTML(String(c.order ?? ''));
+    return `
+      <tr>
+        <td data-label="ID"><span class="fw-semibold">${id}</span></td>
+        <td data-label="${escapeHTML(t('author.cm.col.parent'))}">${parent}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.title'))}">${title}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.level'))}">${level}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.order'))}">${order || '—'}</td>
+        <td data-label="${escapeHTML(t('author.cm.col.actions'))}">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary" data-cm-edit="Courses" data-cm-id="${id}"><i class="bx bx-edit"></i> ${escapeHTML(t('author.cm.edit'))}</button>
+            <button class="btn btn-sm btn-outline-danger" data-cm-del="Courses" data-cm-id="${id}"><i class="bx bx-trash"></i> ${escapeHTML(t('author.cm.delete'))}</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  tb.innerHTML = rows.join('') || `<tr><td colspan="6" class="text-muted">${escapeHTML(t('common.empty'))}</td></tr>`;
+}
+
+function renderContentManager(){
+  renderDomains();
+  renderModules();
+  renderCourses();
+  bindCmRowActions();
+}
+
+async function reloadContentManager(){
+  cmMsg('', '');
+  try {
+    CM.domains = await getDomains();
+    // fetch all modules and courses (unfiltered)
+    CM.modules = await getModules();
+    CM.courses = await getCourses({});
+    renderContentManager();
+  } catch (e){
+    cmMsg('err', String(e.message || e));
+  }
+}
+
+function cmFieldRow({ id, labelKey, type='text', value='', options=null, placeholder='' }){
+  const label = escapeHTML(t(labelKey));
+  const pid = 'cm_' + id;
+  if (type === 'select'){
+    const opts = (options||[]).map(o => `<option value="${escapeHTML(o.value)}"${String(o.value)===String(value)?' selected':''}>${escapeHTML(o.label)}</option>`).join('');
+    return `
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="${pid}">${label}</label>
+        <select class="form-select" id="${pid}" data-cm-field="${escapeHTML(id)}">${opts}</select>
+      </div>
+    `;
+  }
+  const inputTag = type === 'textarea'
+    ? `<textarea class="form-control" id="${pid}" data-cm-field="${escapeHTML(id)}" rows="3" placeholder="${escapeHTML(placeholder)}">${escapeHTML(String(value||''))}</textarea>`
+    : `<input class="form-control" id="${pid}" data-cm-field="${escapeHTML(id)}" type="${escapeHTML(type)}" value="${escapeHTML(String(value||''))}" placeholder="${escapeHTML(placeholder)}" />`;
+  return `
+    <div class="col-12 col-md-6">
+      <label class="form-label" for="${pid}">${label}</label>
+      ${inputTag}
+    </div>
+  `;
+}
+
+function openCmModal({ entity, mode, data }){
+  CM.editing = { entity, mode, data: data || {} };
+  const form = qs('#cmForm');
+  const titleEl = qs('#cmModalTitle');
+  const modalEl = qs('#cmModal');
+  if (!form || !modalEl) return;
+
+  const isEdit = mode === 'edit';
+  if (titleEl) titleEl.textContent = isEdit ? t('author.cm.modal.edit') : t('author.cm.modal.add');
+
+  const d = data || {};
+  const fields = [];
+
+  if (entity === 'Domains'){
+    fields.push(cmFieldRow({ id:'domainId', labelKey:'author.cm.field.domainId', value: d.domainId || '', placeholder:'d-001' }));
+    fields.push(cmFieldRow({ id:'order', labelKey:'author.cm.field.order', type:'number', value: d.order ?? '' }));
+    fields.push(cmFieldRow({ id:'icon', labelKey:'author.cm.field.icon', value: d.icon || '', placeholder:'bx bx-briefcase' }));
+    fields.push(cmFieldRow({ id:'name_fr', labelKey:'author.cm.field.nameFr', value: d.name_fr || '' }));
+    fields.push(cmFieldRow({ id:'name_en', labelKey:'author.cm.field.nameEn', value: d.name_en || '' }));
+    fields.push(cmFieldRow({ id:'name_ar', labelKey:'author.cm.field.nameAr', value: d.name_ar || '' }));
+    fields.push(cmFieldRow({ id:'description_fr', labelKey:'author.cm.field.descFr', type:'textarea', value: d.description_fr || '' }));
+    fields.push(cmFieldRow({ id:'description_en', labelKey:'author.cm.field.descEn', type:'textarea', value: d.description_en || '' }));
+    fields.push(cmFieldRow({ id:'description_ar', labelKey:'author.cm.field.descAr', type:'textarea', value: d.description_ar || '' }));
+  }
+
+  if (entity === 'Modules'){
+    const domainOpts = CM.domains.map(x => ({ value: String(x.domainId||''), label: cmTitleFor(x) || String(x.domainId||'') }));
+    fields.push(cmFieldRow({ id:'moduleId', labelKey:'author.cm.field.moduleId', value: d.moduleId || '', placeholder:'m-001' }));
+    fields.push(cmFieldRow({ id:'domainId', labelKey:'author.cm.field.domainId', type:'select', value: d.domainId || '', options: [{value:'',label:'—'}].concat(domainOpts) }));
+    fields.push(cmFieldRow({ id:'order', labelKey:'author.cm.field.order', type:'number', value: d.order ?? '' }));
+    fields.push(cmFieldRow({ id:'icon', labelKey:'author.cm.field.icon', value: d.icon || '', placeholder:'bx bx-chip' }));
+    fields.push(cmFieldRow({ id:'title_fr', labelKey:'author.cm.field.titleFr', value: d.title_fr || '' }));
+    fields.push(cmFieldRow({ id:'title_en', labelKey:'author.cm.field.titleEn', value: d.title_en || '' }));
+    fields.push(cmFieldRow({ id:'title_ar', labelKey:'author.cm.field.titleAr', value: d.title_ar || '' }));
+    fields.push(cmFieldRow({ id:'description_fr', labelKey:'author.cm.field.descFr', type:'textarea', value: d.description_fr || '' }));
+    fields.push(cmFieldRow({ id:'description_en', labelKey:'author.cm.field.descEn', type:'textarea', value: d.description_en || '' }));
+    fields.push(cmFieldRow({ id:'description_ar', labelKey:'author.cm.field.descAr', type:'textarea', value: d.description_ar || '' }));
+  }
+
+  if (entity === 'Courses'){
+    const moduleOpts = CM.modules.map(x => ({ value: String(x.moduleId||''), label: cmTitleFor(x) || String(x.moduleId||'') }));
+    fields.push(cmFieldRow({ id:'courseId', labelKey:'author.cm.field.courseId', value: d.courseId || '', placeholder:'c-001' }));
+    fields.push(cmFieldRow({ id:'moduleId', labelKey:'author.cm.field.moduleId', type:'select', value: d.moduleId || '', options: [{value:'',label:'—'}].concat(moduleOpts) }));
+    fields.push(cmFieldRow({ id:'level', labelKey:'author.cm.field.level', value: d.level || '', placeholder:'beginner/intermediate/advanced' }));
+    fields.push(cmFieldRow({ id:'order', labelKey:'author.cm.field.order', type:'number', value: d.order ?? '' }));
+    fields.push(cmFieldRow({ id:'title_fr', labelKey:'author.cm.field.titleFr', value: d.title_fr || '' }));
+    fields.push(cmFieldRow({ id:'title_en', labelKey:'author.cm.field.titleEn', value: d.title_en || '' }));
+    fields.push(cmFieldRow({ id:'title_ar', labelKey:'author.cm.field.titleAr', value: d.title_ar || '' }));
+    fields.push(cmFieldRow({ id:'description_fr', labelKey:'author.cm.field.descFr', type:'textarea', value: d.description_fr || '' }));
+    fields.push(cmFieldRow({ id:'description_en', labelKey:'author.cm.field.descEn', type:'textarea', value: d.description_en || '' }));
+    fields.push(cmFieldRow({ id:'description_ar', labelKey:'author.cm.field.descAr', type:'textarea', value: d.description_ar || '' }));
+  }
+
+  form.innerHTML = fields.join('');
+
+  // lock id on edit
+  if (isEdit){
+    const idKey = entity === 'Domains' ? 'domainId' : entity === 'Modules' ? 'moduleId' : 'courseId';
+    const idInput = form.querySelector(`[data-cm-field="${idKey}"]`);
+    if (idInput) idInput.setAttribute('disabled','disabled');
+  }
+
+  const modal = window.window.bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+}
+
+function collectCmForm(){
+  const form = qs('#cmForm');
+  if (!form) return {};
+  const obj = {};
+  form.querySelectorAll('[data-cm-field]').forEach(el => {
+    const k = el.getAttribute('data-cm-field');
+    if (!k) return;
+    let v = el.value;
+    if (el.type === 'number'){
+      v = v === '' ? '' : Number(v);
+      if (!Number.isFinite(v)) v = '';
+    }
+    obj[k] = v;
+  });
+  // restore id in edit (disabled)
+  if (CM.editing?.mode === 'edit'){
+    const idKey = CM.editing.entity === 'Domains' ? 'domainId' : CM.editing.entity === 'Modules' ? 'moduleId' : 'courseId';
+    obj[idKey] = CM.editing.data[idKey];
+  }
+  return obj;
+}
+
+async function saveCm(){
+  if (!CM.editing) return;
+  cmMsg('', '');
+  const { entity } = CM.editing;
+  const obj = collectCmForm();
+
+  try {
+    await upsertEntity(entity, obj);
+    cmMsg('ok', t('author.cm.saved'));
+    // close modal
+    const modalEl = qs('#cmModal');
+    if (modalEl) window.window.window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    await reloadContentManager();
+  } catch (e){
+    cmMsg('err', String(e.message || e));
+  }
+}
+
+async function deleteCm(entity, id){
+  if (!confirm(t('author.cm.confirmDelete'))) return;
+  cmMsg('', '');
+  try {
+    await deleteEntity(entity, id);
+    cmMsg('ok', t('author.cm.deleted'));
+    await reloadContentManager();
+  } catch (e){
+    cmMsg('err', String(e.message || e));
+  }
+}
+
+function bindCmRowActions(){
+  // edit
+  document.querySelectorAll('[data-cm-edit]').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      const entity = btn.getAttribute('data-cm-edit');
+      const id = btn.getAttribute('data-cm-id');
+      if (!entity || !id) return;
+      const list = entity === 'Domains' ? CM.domains : entity === 'Modules' ? CM.modules : CM.courses;
+      const key = entity === 'Domains' ? 'domainId' : entity === 'Modules' ? 'moduleId' : 'courseId';
+      const item = list.find(x => String(x[key]) === String(id)) || null;
+      openCmModal({ entity, mode:'edit', data: item || {} });
+    }, { once: true });
+  });
+  // delete
+  document.querySelectorAll('[data-cm-del]').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      const entity = btn.getAttribute('data-cm-del');
+      const id = btn.getAttribute('data-cm-id');
+      if (!entity || !id) return;
+      deleteCm(entity, id);
+    }, { once: true });
+  });
+}
+
+function initContentManager(){
+  const addBtn = qs('#cmAddBtn');
+  addBtn?.addEventListener('click', ()=>{
+    // determine active tab
+    const active = document.querySelector('#cmTabs .nav-link.active');
+    let entity = 'Domains';
+    if (active?.id === 'cmTabModules') entity = 'Modules';
+    if (active?.id === 'cmTabCourses') entity = 'Courses';
+    openCmModal({ entity, mode:'add', data:{} });
+  });
+
+  qs('#cmSaveBtn')?.addEventListener('click', saveCm);
+
+  // refresh when switching tabs (keeps actions rebound)
+  document.querySelectorAll('#cmTabs .nav-link').forEach(tab => {
+    tab.addEventListener('shown.bs.tab', ()=> renderContentManager());
+  });
+
+  reloadContentManager();
+}
+
 async function init(){
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
+  initContentManager();
 
   const htmlInput = qs('#htmlInput');
   const btnPreview = qs('#btnPreview');

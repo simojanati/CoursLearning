@@ -11,6 +11,12 @@
         if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
         document.documentElement.lang = lang;
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        // Theme (light/dark) applied early to avoid flicker
+        var pref = localStorage.getItem('learnHub:theme') || 'system';
+        var sysDark = false;
+        try { sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
+        var effective = (pref === 'system') ? (sysDark ? 'dark' : 'light') : pref;
+        document.documentElement.setAttribute('data-lh-theme', effective);
         // Keep menu CLOSED by default on mobile
         if (window.innerWidth < 1200) {
           document.documentElement.classList.remove('layout-menu-expanded');
@@ -159,9 +165,8 @@
             </div>
 
             <footer class="content-footer footer bg-footer-theme">
-              <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                <div class="mb-2 mb-md-0">© 2026 LearnHub. All rights reserved.</div>
-                <div><span class="text-muted">MVP</span></div>
+              <div class="container-xxl py-2 text-center">
+                <div class="mb-0">© 2026 LearnHub. All rights reserved.</div>
               </div>
             </footer>
 

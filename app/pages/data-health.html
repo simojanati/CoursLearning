@@ -11,6 +11,12 @@
         if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
         document.documentElement.lang = lang;
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        // Theme (light/dark) applied early to avoid flicker
+        var pref = localStorage.getItem('learnHub:theme') || 'system';
+        var sysDark = false;
+        try { sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
+        var effective = (pref === 'system') ? (sysDark ? 'dark' : 'light') : pref;
+        document.documentElement.setAttribute('data-lh-theme', effective);
         // Keep menu CLOSED by default on mobile
         if (window.innerWidth < 1200) {
           document.documentElement.classList.remove('layout-menu-expanded');
@@ -129,9 +135,11 @@
                           <div id="healthSummary"></div>
 
           <div class="alert alert-info mt-3">
-            <div class="fw-semibold">Tip</div>
+            <div class="fw-semibold" data-i18n="admin.health.tipTitle">Tip</div>
             <div class="small text-muted">
-              Lessons sheet can optionally include <code>resources_fr</code> / <code>resources_en</code>. If present, Data Health will validate them.
+              <span data-i18n="admin.health.tipResources1">The Lessons sheet can optionally include</span>
+              <code>resources_fr</code> / <code>resources_en</code>.
+              <span data-i18n="admin.health.tipResources2">If present, Data Health will validate them.</span>
             </div>
           </div>
 
@@ -198,9 +206,8 @@
             </div>
 
             <footer class="content-footer footer bg-footer-theme">
-              <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                <div class="mb-2 mb-md-0">© 2026 LearnHub. All rights reserved.</div>
-                <div><span class="text-muted">MVP</span></div>
+              <div class="container-xxl py-2 text-center">
+                <div class="mb-0">© 2026 LearnHub. All rights reserved.</div>
               </div>
             </footer>
 

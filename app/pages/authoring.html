@@ -3,9 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+  <script>
+    (function () {
+      try {
+        var lang = (localStorage.getItem('learnHub:lang') || localStorage.getItem('learnHub:lang') || localStorage.getItem('lang') || 'fr');
+        if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
+        document.documentElement.lang = lang;
+        document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        // Theme (light/dark) applied early to avoid flicker
+        var pref = localStorage.getItem('learnHub:theme') || 'system';
+        var sysDark = false;
+        try { sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
+        var effective = (pref === 'system') ? (sysDark ? 'dark' : 'light') : pref;
+        document.documentElement.setAttribute('data-lh-theme', effective);
+        // Keep menu CLOSED by default on mobile
+        if (window.innerWidth < 1200) {
+          document.documentElement.classList.remove('layout-menu-expanded');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <title>Authoring | LearnHub</title>
 
-  <!-- Sneat core -->
+  <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
+
+<!-- Sneat core -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet" />
@@ -86,6 +109,118 @@
       <div class="content-wrapper">
         <div class="container-xxl flex-grow-1 container-p-y">
           <h4 class="fw-bold py-3 mb-4" data-i18n="author.title">Authoring tools</h4>
+
+          <div class="card mb-4" id="cmCard">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="mb-0" data-i18n="author.cm.title">Content manager</h5>
+        <div class="text-muted small" data-i18n="author.cm.hint">Manage Domains, Modules and Courses (metadata only).</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" id="cmAddBtn">
+          <i class="bx bx-plus"></i> <span data-i18n="author.cm.add">Add</span>
+        </button>
+      </div>
+    </div>
+
+    <ul class="nav nav-pills mt-3" id="cmTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="cmTabDomains" data-bs-toggle="pill" data-bs-target="#cmPaneDomains" type="button" role="tab">
+          <span data-i18n="author.cm.domains">Domains</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cmTabModules" data-bs-toggle="pill" data-bs-target="#cmPaneModules" type="button" role="tab">
+          <span data-i18n="author.cm.modules">Modules</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cmTabCourses" data-bs-toggle="pill" data-bs-target="#cmPaneCourses" type="button" role="tab">
+          <span data-i18n="author.cm.courses">Courses</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-3">
+      <div class="tab-pane fade show active" id="cmPaneDomains" role="tabpanel">
+        <div class="table-responsive lh-table-responsive-cards">
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="author.cm.col.id">ID</th>
+                <th data-i18n="author.cm.col.title">Title</th>
+                <th data-i18n="author.cm.col.order">Order</th>
+                <th data-i18n="author.cm.col.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cmDomainsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="cmPaneModules" role="tabpanel">
+        <div class="table-responsive lh-table-responsive-cards">
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="author.cm.col.id">ID</th>
+                <th data-i18n="author.cm.col.parent">Domain</th>
+                <th data-i18n="author.cm.col.title">Title</th>
+                <th data-i18n="author.cm.col.order">Order</th>
+                <th data-i18n="author.cm.col.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cmModulesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="cmPaneCourses" role="tabpanel">
+        <div class="table-responsive lh-table-responsive-cards">
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="author.cm.col.id">ID</th>
+                <th data-i18n="author.cm.col.parent">Module</th>
+                <th data-i18n="author.cm.col.title">Title</th>
+                <th data-i18n="author.cm.col.level">Level</th>
+                <th data-i18n="author.cm.col.order">Order</th>
+                <th data-i18n="author.cm.col.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cmCoursesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="cmMsg" class="mt-2"></div>
+  </div>
+</div>
+
+<!-- Content Manager Modal -->
+<div class="modal fade" id="cmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cmModalTitle" data-i18n="author.cm.modal.title">Edit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="cmForm" class="row g-3">
+          <!-- dynamic fields -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <span data-i18n="author.cm.cancel">Cancel</span>
+        </button>
+        <button type="button" class="btn btn-primary" id="cmSaveBtn">
+          <span data-i18n="author.cm.save">Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
           <div class="row g-4">
             <div class="col-12 col-xl-7">
