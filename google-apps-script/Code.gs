@@ -597,6 +597,56 @@ function authLogin_(params){
   return { token: jwt, user: { userId: String(user.userId), email, role: String(user.role||'student'), firstName: user.firstName||'', lastName: user.lastName||'', verified:true } };
 }
 
+// Self-service registration (manual verification code displayed to admin in Users page)
+function authRegister_(params){
+  const ss = getSpreadsheet_(params);
+  const email = String(params.email || '').trim().toLowerCase();
+  const password = String(params.password || '');
+  const firstName = String(params.firstName || '').trim();
+  const lastName = String(params.lastName || '').trim();
+  const role = 'student';
+
+  if (!email || email.indexOf('@') === -1) return { error: 'INVALID_EMAIL' };
+  if (!password || password.length < 6) return { error: 'WEAK_PASSWORD' };
+
+  const existing = findUserByEmail_(ss, email);
+  if (existing) return { error: 'EMAIL_EXISTS' };
+
+  const userId = Utilities.getUuid();
+  const salt = Utilities.getUuid().replace(/-/g,'');
+  const passwordHash = sha256Hex_(salt + ':' + password);
+
+  const user = {
+    userId,
+    email,
+    passwordHash,
+    salt,
+    role,
+    firstName,
+    lastName,
+    verified: false,
+    verifiedAt: '',
+    // activation code (manual)
+    verifyCode: generateOtpCode_(),
+    verifyExpiresAt: addMinutesIso_(60 * 24), // 24h
+    // reset code (manual)
+    resetCode: '',
+    resetExpiresAt: '',
+    resetRequestedAt: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  upsertUser_(ss, user);
+
+  // Do NOT reveal code to the user (admin will send it manually)
+  return {
+    ok: true,
+    needsVerification: true,
+    user: { userId, email, role, firstName, lastName, verified: false }
+  };
+}
+
 function authMe_(params){
   const ss = getSpreadsheet_(params);
   const auth = requireAuth_(ss, params);

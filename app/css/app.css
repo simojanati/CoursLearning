@@ -590,20 +590,3 @@ html[data-lh-theme="dark"] .landing-nav{
 .lh-btn .spinner-border{
   flex:0 0 auto;
 }
-
-
-/* PWA Install Bar */
-.lh-install-bar{position:fixed;left:0;right:0;bottom:0;z-index:2000;transform:translateY(110%);transition:transform .25s ease;}
-.lh-install-bar.show{transform:translateY(0);}
-.lh-install-inner{display:flex;gap:.75rem;align-items:center;justify-content:space-between;padding:.75rem .9rem;background:rgba(255,255,255,.96);border-top:1px solid rgba(0,0,0,.08);backdrop-filter:saturate(180%) blur(8px);} 
-html.dark-style .lh-install-inner, body.dark-style .lh-install-inner{background:rgba(30,30,30,.94);border-top-color:rgba(255,255,255,.08);} 
-.lh-install-text{min-width:0;}
-.lh-install-title{font-weight:700;font-size:.95rem;line-height:1.1;margin-bottom:.15rem;}
-.lh-install-desc{font-size:.8rem;opacity:.85;line-height:1.2;}
-.lh-install-ios{font-size:.78rem;opacity:.9;margin-top:.25rem;}
-.lh-install-actions{display:flex;gap:.5rem;flex-shrink:0;}
-@media (max-width:420px){.lh-install-desc{display:none;}.lh-install-inner{padding:.65rem .75rem;}}
-
-/* Avoid content hidden behind install bar */
-body{padding-bottom:env(safe-area-inset-bottom);} 
-body.lh-has-installbar{padding-bottom:calc(env(safe-area-inset-bottom) + 72px);} 
