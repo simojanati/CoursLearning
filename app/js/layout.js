@@ -2,8 +2,9 @@ import { initGlobalSearch } from './global-search.js';
 import { bindThemeToggle, initTheme } from './theme.js';
 import { getUser, isAuthenticated, logout } from './auth.js';
 import { t } from './i18n.js';
-import { initPWA } from './pwa.js';
+import { initPWA, initInstallBar } from './pwa.js';
 initPWA();
+initInstallBar();
 
 /**
  * Shared layout loader (topbar injection) to avoid duplicating navbar markup.
