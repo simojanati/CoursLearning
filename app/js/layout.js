@@ -1,5 +1,7 @@
 import { initGlobalSearch } from './global-search.js';
 import { bindThemeToggle, initTheme } from './theme.js';
+import { getUser, isAuthenticated, logout } from './auth.js';
+import { t } from './i18n.js';
 /**
  * Shared layout loader (topbar injection) to avoid duplicating navbar markup.
  *
@@ -9,6 +11,41 @@ import { bindThemeToggle, initTheme } from './theme.js';
  */
 
 let _topbarPromise = null;
+
+function renderAuthMenu_(){
+  const menu = document.getElementById('lhAuthMenu');
+  if (!menu) return;
+
+  const u = getUser();
+  const authed = isAuthenticated() && u;
+
+  if (!authed){
+    menu.innerHTML = `
+      <li><a class="dropdown-item" href="../pages/login.html"><i class="bx bx-log-in me-2"></i>${t('auth.loginLink','Login')}</a></li>
+      <li><a class="dropdown-item" href="../pages/register.html"><i class="bx bx-user-plus me-2"></i>${t('auth.registerLink','Register')}</a></li>
+    `;
+    return;
+  }
+
+  const role = String(u.role || '').toUpperCase();
+  menu.innerHTML = `
+    <li class="px-3 py-2">
+      <div class="fw-semibold">${u.email || ''}</div>
+      <div class="text-muted small">${role}</div>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../pages/home.html"><i class="bx bx-home me-2"></i>${t('topbar.dashboard','Dashboard')}</a></li>
+    <li><a class="dropdown-item" href="#" id="lhLogoutBtn"><i class="bx bx-power-off me-2"></i>${t('topbar.logout','Logout')}</a></li>
+  `;
+
+  const btn = document.getElementById('lhLogoutBtn');
+  if (btn){
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout('../../index.html');
+    });
+  }
+}
 
 export async function ensureTopbar(options = {}){
   if (_topbarPromise) return _topbarPromise;
@@ -59,6 +96,7 @@ export async function ensureTopbar(options = {}){
     // Theme toggle (shared across pages)
     try {
       initTheme();
+    renderAuthMenu_();
       const themeBtn = mount.querySelector('#lhThemeToggle');
       if (themeBtn) bindThemeToggle(themeBtn);
     } catch (e) {}

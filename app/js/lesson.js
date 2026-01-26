@@ -4,6 +4,7 @@ import { markLessonVisited, setLessonCompleted, isLessonCompleted, loadAiChat, s
 import { initI18n, t, pickField } from './i18n.js';
 import { AI_ENABLED, AI_MAX_INPUT_CHARS, AI_DEFAULT_MODE } from './app-config.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   lessonId: '',
@@ -680,6 +681,8 @@ function initAiSelection(){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
 

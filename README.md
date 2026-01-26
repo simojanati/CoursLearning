@@ -211,3 +211,34 @@ If the sheet is missing, defaults are used.
 > Isometric illustration of an e-learning dashboard with modules, lessons, quiz, and progress tracking. Bright and clean, white background, soft purple accent (#696cff), minimal details, no text, no logos, high resolution PNG.
 
 **بعد ما تولّد الصورة:** سميها `learnhub-hero.png` وبدّل الملف اللي فـ `assets/img/illustrations/`.
+
+
+---
+
+## 4) Auth (Login/Register) + Roles
+
+دابا تزاد **Auth بسيط** مبني على Google Sheets + JWT (HS256).
+
+### A) Sheet: Users
+أضف tab جديدة فـ Spreadsheet سميتها: `Users`
+Headers (row 1):
+
+| userId | email | passwordHash | salt | role | firstName | lastName | createdAt |
+
+> التسجيل (Register) كيعطي role = `student` تلقائياً.
+
+### B) Admin role
+باش تولّي Admin:
+- دير register بحساب ديالك
+- فـ `Users` بدّل `role` من `student` لـ `admin`
+
+### C) Secret JWT
+خاصك تحط secret فـ Script Properties:
+- Apps Script → Project Settings → Script properties
+- key: `AUTH_SECRET`
+- value: secret قوي
+
+### D) Security note
+حيت احنا خدامين بــ JSONP (باش نتفادو CORS فـ GitHub Pages) كلمات السر كتمشي فـ query params.
+هاد الشي مناسب لـ MVP فقط. فالنسخة production كنقترحو Backend حقيقي (Node/Spring) مع POST + HTTPS + Refresh token.
+

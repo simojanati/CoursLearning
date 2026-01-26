@@ -573,3 +573,20 @@ html[data-lh-theme="dark"] .landing-nav{
   }
 }
 
+
+
+/* Auth button spinner alignment (mobile-friendly) */
+.lh-btn{
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+}
+.lh-btn .lh-btn-content{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+}
+.lh-btn .spinner-border{
+  flex:0 0 auto;
+}

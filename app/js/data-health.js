@@ -3,6 +3,7 @@ import { getHealth } from './api.js';
 import { qs, escapeHTML, renderEmpty } from './ui.js';
 import { initI18n, t } from './i18n.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 function _lang(){ try { return (window.LH_LANG || document.documentElement.lang || 'fr'); } catch(e){ return 'fr'; } }
 
@@ -97,12 +98,29 @@ function renderSheets(health){
   const tbody = qs('#healthSheetsTbody');
   if (!tbody) return;
 
-  const sheets = health.sheets || {};
-  const rows = Object.entries(sheets).map(([name, s]) => {
-    const exists = !!s.exists;
-    const level = exists && (!s.missingHeaders || !s.missingHeaders.length) ? 'ok'
+  // Accept multiple payload shapes (older/newer backends)
+  const h = (health && (health.health || health.data)) ? (health.health || health.data) : (health || {});
+  const sheetsObj = h.sheets || h.tabs || {};
+  const entries = Object.entries(sheetsObj);
+
+  if (!entries.length){
+    tbody.innerHTML = `<tr><td colspan="3" class="text-muted">${escapeHTML(t('admin.health.noSheets') || '—')}</td></tr>`;
+    return;
+  }
+
+  const rows = entries.map(([name, s]) => {
+    const exists = !!(s && s.exists);
+    const missReq = (s && (s.missingHeaders || s.missingRequired || s.missing || [])) || [];
+    const missOpt = (s && (s.optionalMissing || s.missingOptional || [])) || [];
+    const missing = []
+      .concat(missReq.map(x => String(x)))
+      .concat(missOpt.map(x => String(x) + ' (opt)'))
+      .filter(Boolean)
+      .join(', ');
+
+    const level = exists && (!missReq.length) ? 'ok'
                 : exists ? 'warn' : 'err';
-    const missing = (s.missingHeaders || []).join(', ');
+
     return `
       <tr>
         <td class="fw-semibold">${escapeHTML(name)}</td>
@@ -210,6 +228,8 @@ async function run(){
 }
 
 async function init(){
+  requireAuth({ roles: ['admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
   qs('#runHealth')?.addEventListener('click', run);
@@ -217,4 +237,3 @@ initI18n();
 }
 
 init();
-

@@ -4,6 +4,7 @@ import { qs, renderEmpty, escapeHTML } from './ui.js';
 import { getRecentLessons, getCompletedLessons, loadJSON, computeDomainProgress } from './storage.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   domains: [],
@@ -143,6 +144,8 @@ async function loadRecentLessonObjects(force = false){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
 

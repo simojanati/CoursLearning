@@ -52,10 +52,13 @@
 
         <div class="d-flex align-items-center gap-2 ms-auto">
           <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language">
               <i class="bx bx-globe"></i> <span id="langLabel">FR</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <!-- On landing page the language switcher sits near the LEFT edge.
+                 Using dropdown-menu-end would push the menu off-screen on mobile.
+                 So we keep default alignment here. -->
+            <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
               <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
               <li><a class="dropdown-item" href="#" data-lang="ar">العربية</a></li>
@@ -66,8 +69,19 @@
             <i class="bx bx-moon"></i>
           </button>
 
-          <a class="btn btn-primary" href="app/pages/home.html">
-            <i class="bx bx-right-arrow-alt"></i> <span data-i18n="landing.ctaStart">Commencer</span>
+          <!-- Desktop CTAs (text) -->
+          <a class="btn btn-primary d-none d-sm-inline-flex" id="lhCtaPrimary" href="app/pages/login.html">
+            <i class="bx bx-log-in"></i> <span class="ms-1" data-i18n="landing.ctaLogin">Se connecter</span>
+          </a>
+          <a class="btn btn-outline-primary d-none d-sm-inline-flex" id="lhCtaSecondary" href="app/pages/register.html">
+            <i class="bx bx-user-plus"></i> <span class="ms-1" data-i18n="landing.ctaRegister">Créer un compte</span>
+          </a>
+          <!-- Mobile CTAs (icons only, compact) -->
+          <a class="btn btn-primary btn-sm d-inline-flex d-sm-none" id="lhCtaPrimaryMobile" href="app/pages/login.html" aria-label="Login">
+            <i class="bx bx-log-in"></i>
+          </a>
+          <a class="btn btn-outline-primary btn-sm d-inline-flex d-sm-none" id="lhCtaSecondaryMobile" href="app/pages/register.html" aria-label="Register">
+            <i class="bx bx-user-plus"></i>
           </a>
         </div>
       </div>
@@ -238,5 +252,41 @@
         } catch(e) {}
       })();
     </script>
-  </body>
+  
+    <script>
+      (function(){
+        try {
+          var token = localStorage.getItem('learnHub:authToken');
+          if (!token) return;
+          var parts = String(token).split('.');
+          if (parts.length < 2) return;
+          function b64urlDecode(str){
+            str = str.replace(/-/g,'+').replace(/_/g,'/');
+            while (str.length % 4) str += '=';
+            try { return decodeURIComponent(escape(atob(str))); } catch(e){ try { return atob(str);} catch(e2){ return ''; } }
+          }
+          var payload = JSON.parse(b64urlDecode(parts[1]));
+          if (payload && payload.exp){
+            var now = Math.floor(Date.now()/1000);
+            if (now >= Number(payload.exp)) return;
+          }
+          var primary = document.getElementById('lhCtaPrimary');
+          var secondary = document.getElementById('lhCtaSecondary');
+          var primaryM = document.getElementById('lhCtaPrimaryMobile');
+          var secondaryM = document.getElementById('lhCtaSecondaryMobile');
+          if (primary){
+            primary.href = 'app/pages/home.html';
+            var span = primary.querySelector('[data-i18n="landing.ctaLogin"]');
+            if (span) span.setAttribute('data-i18n','landing.ctaDashboard');
+          }
+          if (secondary) secondary.classList.add('d-none');
+
+          // Mobile buttons
+          if (primaryM) primaryM.href = 'app/pages/home.html';
+          if (secondaryM) secondaryM.classList.add('d-none');
+        } catch(e){}
+      })();
+    </script>
+
+</body>
 </html>

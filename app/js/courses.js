@@ -4,6 +4,7 @@ import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField, levelLabel } from './i18n.js';
 import { ensureTopbar } from './layout.js';
 import { getCourseProgress, upsertCourseMeta } from './storage.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   courses: [],
@@ -197,6 +198,8 @@ async function loadCoursesFor(domainId, moduleId){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'courses.searchPlaceholder' });
   initI18n();
   i18nizeLevelOptions();

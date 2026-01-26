@@ -4,6 +4,7 @@ import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { ensureTopbar } from './layout.js';
 import { computeModuleProgress } from './storage.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   domainId: '',
@@ -66,6 +67,8 @@ function applySearch(){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'modules.searchPlaceholder' });
   initI18n();
   parseParams();

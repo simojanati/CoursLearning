@@ -4,6 +4,7 @@ import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { saveQuizResult, setLessonCompleted } from './storage.js';
 import { initI18n, t } from './i18n.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   lessonId: '',
@@ -200,6 +201,8 @@ function bindSubmit(){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 	initI18n();
 

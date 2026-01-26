@@ -4,6 +4,7 @@ import { qs, escapeHTML } from './ui.js';
 import { sanitizeHtml, buildLessonHtml } from './authoring-tools.js';
 import { getLesson, getQuizByLesson, getDomains, getModules, getCourses, upsertEntity, deleteEntity } from './api.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 function copyFrom(selector){
   const el = document.querySelector(selector);
@@ -556,6 +557,8 @@ function initContentManager(){
 }
 
 async function init(){
+  requireAuth({ roles: ['admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
   initContentManager();

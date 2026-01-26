@@ -4,6 +4,7 @@ import { qs, renderEmpty, escapeHTML, renderBreadcrumbs } from './ui.js';
 import { initI18n, t, pickField } from './i18n.js';
 import { isLessonCompleted, saveCourseProgress, upsertCourseMeta, getRecentLessons } from './storage.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 const state = {
   courseId: '',
@@ -125,6 +126,8 @@ function applySearch(){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
 

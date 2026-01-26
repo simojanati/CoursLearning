@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../../assets/" data-template="vertical-menu-template-free">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    
+    <script>
+      (function () {
+        try {
+          var lang = (localStorage.getItem('learnHub:lang') || localStorage.getItem('lang') || 'fr');
+          if (['fr','en','ar'].indexOf(lang) === -1) lang = 'fr';
+          document.documentElement.lang = lang;
+          document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+          var pref = localStorage.getItem('learnHub:theme') || 'system';
+          var sysDark = false;
+          try { sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
+          var effective = (pref === 'system') ? (sysDark ? 'dark' : 'light') : pref;
+          document.documentElement.setAttribute('data-lh-theme', effective);
+          if (window.innerWidth < 1200) {
+            document.documentElement.classList.remove('layout-menu-expanded');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <title>Users | LearnHub</title>
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../../assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/core.css" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="../../assets/vendor/css/theme-default.css" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="../../assets/css/demo.css" />
+    <link rel="stylesheet" href="../../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="../css/app.css" />
+
+    <script src="../../assets/vendor/js/helpers.js"></script>
+    <script src="../../assets/js/config.js"></script>
+  </head>
+
+  <body data-i18n-title="admin.users.title">
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+        <!-- Menu -->
+        <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+          <div class="app-brand demo">
+            <a href="home.html" class="app-brand-link">
+              <span class="app-brand-logo demo">
+                <img src="../../assets/img/brand/icon.png" alt="LearnHub" style="width:24px; height:24px;" />
+              </span>
+              <span class="app-brand-text demo menu-text fw-bolder ms-2">LearnHub</span>
+            </a>
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+              <i class="bx bx-chevron-left bx-sm align-middle"></i>
+            </a>
+          </div>
+
+          <div class="menu-inner-shadow"></div>
+
+          <ul class="menu-inner py-1">
+            <li class="menu-item">
+              <a href="home.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                <div data-i18n="menu.home">Home</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a href="courses.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-book"></i>
+                <div data-i18n="menu.courses">Courses</div>
+              </a>
+            </li>
+
+            <li class="menu-item">
+              <a href="progress.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                <div data-i18n="menu.progress">Progress</div>
+              </a>
+            </li>
+
+            <li class="menu-item d-none" data-admin-only>
+              <a href="data-health.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-cog"></i>
+                <div data-i18n="menu.admin">Admin</div>
+              </a>
+            </li>
+
+            <li class="menu-item" data-admin-only>
+              <a href="users.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user"></i>
+                <div data-i18n="menu.users">Users</div>
+              </a>
+            </li>
+
+            <li class="menu-item" data-admin-only>
+              <a href="authoring.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit-alt"></i>
+                <div data-i18n="menu.authoring">Authoring</div>
+              </a>
+            </li>
+          </ul>
+        </aside>
+        <!-- / Menu -->
+
+        <div class="layout-page">
+          <div id="lhTopbar"></div>
+
+          <div class="content-wrapper">
+            <div class="container-xxl flex-grow-1 container-p-y">
+              <div class="card">
+                <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                  <div>
+                    <h5 class="mb-1" data-i18n="admin.users.title">Users</h5>
+                    <div class="text-muted" data-i18n="admin.users.subtitle">Manage roles (student/admin). Passwords are never shown.</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bx bx-search"></i></span>
+                      <input type="text" class="form-control" id="userSearch" placeholder="Search…" data-i18n-placeholder="admin.users.search" />
+                    </div>
+                    <button class="btn btn-primary" id="btnRefresh">
+                      <i class="bx bx-refresh"></i> <span class="d-none d-md-inline" data-i18n="admin.users.refresh">Refresh</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                      <div class="alert alert-warning d-none" id="adminPending"></div>
+                  <div class="alert alert-info" id="usersTip">
+                    <i class="bx bx-info-circle"></i>
+                    <span class="ms-1" data-i18n="admin.users.tip">Tip: register a user, then promote them to admin here.</span>
+                  </div>
+
+                  
+                  <div class="card mb-3" id="createUserCard">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <div class="fw-semibold" data-i18n="admin.users.create.title">Ajouter un utilisateur</div>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#createUserCollapse" aria-expanded="false" aria-controls="createUserCollapse">
+                        <i class="bx bx-plus"></i> <span class="d-none d-md-inline" data-i18n="admin.users.create.toggle">Nouveau</span>
+                      </button>
+                    </div>
+                    <div class="collapse" id="createUserCollapse">
+                      <div class="card-body">
+                        <form id="createUserForm" class="row g-2">
+                          <div class="col-12 col-md-6">
+                            <label class="form-label" for="cuEmail" data-i18n="admin.users.create.email">Email</label>
+                            <input class="form-control" id="cuEmail" type="email" required placeholder="email@domain.com" />
+                          </div>
+                          <div class="col-6 col-md-3">
+                            <label class="form-label" for="cuFirstName" data-i18n="admin.users.create.firstName">Prénom</label>
+                            <input class="form-control" id="cuFirstName" type="text" placeholder="—" />
+                          </div>
+                          <div class="col-6 col-md-3">
+                            <label class="form-label" for="cuLastName" data-i18n="admin.users.create.lastName">Nom</label>
+                            <input class="form-control" id="cuLastName" type="text" placeholder="—" />
+                          </div>
+
+                          <div class="col-12 col-md-4">
+                            <label class="form-label" for="cuRole" data-i18n="admin.users.create.role">Rôle</label>
+                            <select class="form-select" id="cuRole">
+                              <option value="student" data-i18n="admin.users.role.student">Student</option>
+                              <option value="admin" data-i18n="admin.users.role.admin">Admin</option>
+                            </select>
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label" for="cuPassword" data-i18n="admin.users.create.password">Mot de passe</label>
+                            <input class="form-control" id="cuPassword" type="password" required minlength="6" />
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <label class="form-label" for="cuPassword2" data-i18n="admin.users.create.password2">Confirmer</label>
+                            <input class="form-control" id="cuPassword2" type="password" required minlength="6" />
+                          </div>
+
+                          
+                          <div class="col-12">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="cuSendInvite" />
+                              <label class="form-check-label" for="cuSendInvite" data-i18n="admin.users.create.sendInvite">Send invitation email (set password link)</label>
+                            </div>
+                            <div class="form-check mt-1">
+                              <input class="form-check-input" type="checkbox" id="cuIncludePassword" />
+                              <label class="form-check-label" for="cuIncludePassword" data-i18n="admin.users.create.includePassword">Include password in email (not recommended)</label>
+                            </div>
+                          </div>
+
+                          <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-primary lh-btn" type="submit" id="btnCreateUser">
+                              <span class="lh-btn-content">
+                                <span class="spinner-border spinner-border-sm d-none" id="createUserSpinner" role="status" aria-hidden="true"></span>
+                                <span class="lh-btn-text" data-i18n="admin.users.create.submit">Créer</span>
+                              </span>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" id="btnCreateUserClear" data-i18n="admin.users.create.clear">Vider</button>
+                          </div>
+
+                          <div class="col-12">
+                            <div class="alert alert-danger d-none mb-0" id="createUserErr" role="alert"></div>
+                            <div class="alert alert-success d-none mb-0" id="createUserOk" role="alert"></div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+<div class="alert alert-success d-none" id="okBox" role="alert"></div>
+                  <div class="alert alert-danger d-none" id="errBox" role="alert"></div>
+
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                      <thead>
+                        <tr>
+                          <th data-i18n="admin.users.table.email">Email</th>
+                          <th data-i18n="admin.users.table.name">Name</th>
+                          <th data-i18n="admin.users.table.role">Role</th>
+                          <th data-i18n="admin.users.table.created">Created</th>
+                          <th class="text-end" data-i18n="admin.users.table.actions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="usersTbody"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="d-none" id="usersEmpty"></div>
+                </div>
+              </div>
+            </div>
+
+            <footer class="content-footer footer bg-footer-theme">
+              <div class="container-xxl py-2 text-center">
+                <div class="mb-0">© 2026 LearnHub. All rights reserved.</div>
+              </div>
+            </footer>
+
+            <div class="content-backdrop fade"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+
+    <!-- Core JS -->
+    <script src="../../assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="../../assets/vendor/libs/popper/popper.js"></script>
+    <script src="../../assets/vendor/js/bootstrap.js"></script>
+    <script src="../../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="../../assets/vendor/js/menu.js"></script>
+
+    <!-- Main JS -->
+    <script src="../../assets/js/main.js"></script>
+
+    <!-- App JS -->
+    <script type="module" src="../js/users.js"></script>
+  
+  <!-- Template Modal -->
+  <div class="modal fade" id="tplModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tplModalTitle">Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-2" id="tplModalHint"></p>
+          <textarea class="form-control" id="tplModalText" rows="10" readonly></textarea>
+          <div class="alert alert-success d-none mt-2" id="tplCopied">Copied</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="actions.close">Close</button>
+          <button type="button" class="btn btn-primary" id="btnCopyTpl" data-i18n="actions.copy">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

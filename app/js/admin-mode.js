@@ -1,15 +1,10 @@
-// Admin menu visibility (simple, not secure).
-// Use ?admin=1 to enable, or localStorage 'adminMode' = '1'
-(function(){
-  try {
-    const url = new URL(window.location.href);
-    const p = url.searchParams.get('admin');
-    if (p === '1') localStorage.setItem('adminMode','1');
-  } catch {}
-})();
+import { hasRole } from './auth.js';
+import { adminAlerts } from './api.js';
 
+// Admin menu visibility (UI only). Real security is enforced in backend.
+// Admin = role 'admin'
 export function isAdminMode(){
-  try { return localStorage.getItem('adminMode') === '1'; } catch { return false; }
+  return hasRole('admin');
 }
 
 export function applyAdminMode(){
@@ -22,3 +17,41 @@ export function applyAdminMode(){
 
 // run immediately
 applyAdminMode();
+
+
+export async function initAdminAlerts(){
+  try{
+    if (!isAdminMode()) return;
+    const res = await adminAlerts();
+    const v = res?.pending?.verify || 0;
+    const r = res?.pending?.reset || 0;
+    const total = v + r;
+
+    // Find menu link to users
+    const link = document.querySelector('a[href="users.html"], a[href="./users.html"]');
+    if (!link) return;
+
+    let badge = link.querySelector('.lh-badge');
+    if (!badge){
+      badge = document.createElement('span');
+      badge.className = 'badge bg-danger lh-badge ms-2';
+      badge.style.fontSize = '0.75rem';
+      link.appendChild(badge);
+    }
+    if (total > 0){
+      badge.textContent = String(total);
+      badge.classList.remove('d-none');
+      badge.title = `Pending: activation=${v}, reset=${r}`;
+    } else {
+      badge.classList.add('d-none');
+    }
+  } catch(e){
+    // ignore
+  }
+}
+
+// auto-run
+document.addEventListener('DOMContentLoaded', ()=>{
+  applyAdminMode();
+  initAdminAlerts();
+});

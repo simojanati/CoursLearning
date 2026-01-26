@@ -238,3 +238,10 @@ function fetchWithRetry_(url, options){
     attempt++;
   }
 }
+
+
+// Run this once from the Apps Script editor to grant MailApp permissions.
+function authorizeMail_(){
+  MailApp.getRemainingDailyQuota();
+  return true;
+}

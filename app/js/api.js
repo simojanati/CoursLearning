@@ -1,4 +1,9 @@
 import { API_BASE_URL, USE_MOCK_DATA, SPREADSHEET_ID, AI_API_BASE_URL } from './app-config.js';
+
+let _tokenProvider = () => null;
+export function setTokenProvider(fn){ _tokenProvider = (typeof fn === 'function') ? fn : (()=>null); }
+function getAuthToken_(){ try { return _tokenProvider() || null; } catch { return null; } }
+
 import { mockCourses, mockLessons, mockQuizzes } from './mock-data.js';
 
 function _normOrder(v){
@@ -24,6 +29,14 @@ function buildUrl(action, params = {}){
   url.searchParams.set('action', action);
   if (SPREADSHEET_ID && String(SPREADSHEET_ID).trim().length){
     url.searchParams.set('spreadsheetId', String(SPREADSHEET_ID).trim());
+  }
+
+  // Attach auth token automatically (for protected endpoints)
+  if (!('token' in params)){
+    const tok = getAuthToken_();
+    if (tok && !String(action).startsWith('auth')){
+      url.searchParams.set('token', String(tok));
+    }
   }
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v)));
   return url;
@@ -120,6 +133,14 @@ function buildAiUrl(action, params = {}){
   if (SPREADSHEET_ID && String(SPREADSHEET_ID).trim().length){
     url.searchParams.set('spreadsheetId', String(SPREADSHEET_ID).trim());
   }
+
+  // Attach auth token automatically (for protected endpoints)
+  if (!('token' in params)){
+    const tok = getAuthToken_();
+    if (tok && !String(action).startsWith('auth')){
+      url.searchParams.set('token', String(tok));
+    }
+  }
   Object.entries(params || {}).forEach(([k,v]) => {
     if (v === undefined || v === null) return;
     url.searchParams.set(k, String(v));
@@ -137,6 +158,7 @@ async function apiCall(action, params = {}) {
       const data = await fetchJson(action, params);
       if (data && data.error){
         const extra = data.message ? (': ' + String(data.message)) : '';
+        _handleNotVerified_(data.error);
         throw new Error(String(data.error) + extra);
       }
       return data;
@@ -144,6 +166,7 @@ async function apiCall(action, params = {}) {
       const data = await jsonp(action, params);
       if (data && data.error){
         const extra = data.message ? (': ' + String(data.message)) : '';
+        _handleNotVerified_(data.error);
         throw new Error(String(data.error) + extra);
       }
       return data;
@@ -151,6 +174,17 @@ async function apiCall(action, params = {}) {
   } finally {
     try { window.dispatchEvent(new CustomEvent('lh:loading', { detail: { on: false } })); } catch(e) {}
   }
+}
+
+
+function _handleNotVerified_(errCode){
+  try{
+    if (String(errCode) !== 'EMAIL_NOT_VERIFIED') return;
+    const p = (location && location.pathname) ? location.pathname : '';
+    if (p.endsWith('/verify.html')) return;
+    const here = encodeURIComponent(p.split('/').pop() + (location.search||''));
+    location.href = `verify.html?returnTo=${here}`;
+  } catch(e){}
 }
 
 
@@ -224,7 +258,8 @@ export async function getHealth(){
       checks: [{ level: 'ok', code: 'MOCK_MODE', message: 'Mock mode enabled' }]
     };
   }
-  return await apiCall('health', {});
+  // Backend action name is dataHealth
+  return await apiCall('dataHealth', {});
 }
 
 
@@ -249,7 +284,8 @@ export async function aiChat({ lessonId, lang, mode, question, title, context, s
   const data = await jsonpUrl(url);
   if (data && data.error){
     const extra = data.message ? (': ' + String(data.message)) : '';
-    throw new Error(String(data.error) + extra);
+    _handleNotVerified_(data.error);
+        throw new Error(String(data.error) + extra);
   }
   return data;
 }
@@ -293,4 +329,85 @@ export async function deleteEntity(entity, id){
   if (!id) throw new Error('Missing id');
   const payload = await apiCall('delete', { entity: String(entity), id: String(id) });
   return payload;
+}
+
+
+// ------------------- AUTH -------------------
+export async function authRegister({ email, password, firstName='', lastName='', appBaseUrl='' }){
+  return await jsonp('authRegister', { email, password, firstName, lastName, appBaseUrl });
+}
+
+export async function authLogin(email, password){
+  return await jsonp('authLogin', { email, password });
+}
+
+export async function authMe(){
+  return await jsonp('authMe', {});
+}
+
+// Accept object signature to match auth.js usage
+export async function authResendVerification({ email, appBaseUrl='' } = {}){
+  return await jsonp('authResendVerification', { email, appBaseUrl });
+}
+
+export async function authConfirmEmail({ email, token, appBaseUrl='' } = {}){
+  return await jsonp('authConfirmEmail', { email, token, appBaseUrl });
+}
+
+// Accept object signature to match auth.js usage
+export async function authForgotPassword({ email, appBaseUrl='' } = {}){
+  return await jsonp('authForgotPassword', { email, appBaseUrl });
+}
+
+// Backend expects "code" (OTP) not "token"
+export async function authResetPassword({ email, code, newPassword, appBaseUrl='' } = {}){
+  return await jsonp('authResetPassword', { email, code, newPassword, appBaseUrl });
+}
+
+// ------------------- ADMIN: USERS -------------------
+export async function adminListUsers(){
+  // Users page expects { users, pending }
+  return await apiCall('adminUsersList', {});
+}
+
+export async function adminUpdateUserRole({ userId='', email='', role='' } = {}){
+  const params = {};
+  if (userId) params.userId = String(userId);
+  if (email) params.email = String(email);
+  if (role) params.role = String(role);
+  const data = await apiCall('adminUpdateUserRole', params);
+  return data;
+}
+
+
+export async function adminCreateUser({ email='', password='', role='student', firstName='', lastName='' } = {}){
+  const params = { email: String(email||''), password: String(password||''), role: String(role||'student') };
+  if (firstName) params.firstName = String(firstName);
+  if (lastName) params.lastName = String(lastName);
+  const data = await apiCall('adminCreateUser', params);
+  return data;
+}
+
+export async function adminSendInvite({ email, includePassword=false, password='', appBaseUrl='' } = {}){
+  return await apiCall('adminSendInvite', { email, includePassword, password, appBaseUrl });
+}
+
+export async function authVerifyCode({ email, code } = {}){
+  return await apiCall('authVerifyCode', { email, code });
+}
+
+export async function adminAlerts(){
+  return await apiCall('adminAlerts', {});
+}
+
+export async function adminRegenerateVerifyCode({ email } = {}){
+  return await apiCall('adminRegenerateVerifyCode', { email });
+}
+
+export async function adminRegenerateResetCode({ email } = {}){
+  return await apiCall('adminRegenerateResetCode', { email });
+}
+
+export async function adminClearResetRequest({ email } = {}){
+  return await apiCall('adminClearResetRequest', { email });
 }

@@ -6,6 +6,7 @@ import { getAllCourseProgress, getAllCourseMeta, getCompletedLessons, getLastVis
 import { getHealth, getCourses, getLesson } from './api.js';
 import { escapeHTML } from './ui.js';
 import { ensureTopbar } from './layout.js';
+import { requireAuth } from './auth.js';
 
 // Note: Export/import supports both the new "progress" format and older legacy keys.
 
@@ -304,6 +305,8 @@ async function renderDashboard({ refreshData = false } = {}){
 }
 
 async function init(){
+  requireAuth({ roles: ['student','admin'] });
+
   await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'topbar.search' });
 initI18n();
 
