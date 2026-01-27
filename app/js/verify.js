@@ -18,6 +18,15 @@ async function init(){
   const emailPrefill = getParam('email');
   if (emailPrefill) qs('#email').value = emailPrefill;
 
+  // Prefill from registration puzzle (if available)
+  try{
+    const se = sessionStorage.getItem('lh_verify_email');
+    const sc = sessionStorage.getItem('lh_verify_code');
+    if (!emailPrefill && se) qs('#email').value = se;
+    if (sc) qs('#code').value = sc;
+  } catch {}
+
+
   const pending = getParam('pending');
   const info = qs('#infoBox');
   if (pending && info){

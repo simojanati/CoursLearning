@@ -8,106 +8,6 @@ import { adminListUsers, adminUpdateUserRole, adminCreateUser, adminRegenerateVe
 function tOr(key, fallback){ const v = t(key); return (v === key) ? fallback : v; }
 
 
-const POLL_MS = 30000;
-const LS_LAST_COUNTS = 'lh_admin_last_counts';
-const LS_NOTIFY_ENABLED = 'lh_admin_notify_enabled';
-
-function getLastCounts_(){
-  try { return JSON.parse(localStorage.getItem(LS_LAST_COUNTS) || '{"verify":0,"reset":0}'); }
-  catch(e){ return { verify:0, reset:0 }; }
-}
-function setLastCounts_(c){
-  localStorage.setItem(LS_LAST_COUNTS, JSON.stringify({ verify: c.verify||0, reset: c.reset||0 }));
-}
-
-function isNotifyEnabled_(){
-  return localStorage.getItem(LS_NOTIFY_ENABLED) === '1';
-}
-function setNotifyEnabled_(v){
-  localStorage.setItem(LS_NOTIFY_ENABLED, v ? '1' : '0');
-}
-
-function updateNotifyButton_(){
-  const btn = qs('#btnNotify');
-  if (!btn) return;
-  const supported = ('Notification' in window);
-  if (!supported){
-    btn.classList.add('d-none');
-    return;
-  }
-  const perm = Notification.permission;
-  const enabled = isNotifyEnabled_();
-  btn.disabled = false;
-  if (perm === 'granted' && enabled){
-    btn.classList.remove('btn-outline-secondary');
-    btn.classList.add('btn-success');
-  } else {
-    btn.classList.add('btn-outline-secondary');
-    btn.classList.remove('btn-success');
-  }
-}
-
-async function pollAdminAlerts_(){
-  // poll only when tab is visible
-  if (document.visibilityState && document.visibilityState !== 'visible') return;
-  try{
-    const res = await adminAlerts();
-    const pending = res?.pending || { verify:0, reset:0 };
-    const current = { verify: pending.verify||0, reset: pending.reset||0 };
-    const last = getLastCounts_();
-
-    // notify only on increase
-    const incVerify = Math.max(0, current.verify - (last.verify||0));
-    const incReset  = Math.max(0, current.reset  - (last.reset||0));
-
-    // update stored counts
-    setLastCounts_(current);
-
-    // update banner without reloading full list
-    renderPending(current);
-
-    if (!('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-    if (!isNotifyEnabled_()) return;
-
-    if (incVerify > 0){
-      new Notification('LearnHub', { body: tOr('admin.alerts.newVerify','New activation request.') + ` (+${incVerify})` });
-    }
-    if (incReset > 0){
-      new Notification('LearnHub', { body: tOr('admin.alerts.newReset','New reset request.') + ` (+${incReset})` });
-    }
-  } catch(e){
-    // silent: polling shouldn't break UI
-  }
-}
-
-function startAlertsPolling_(){
-  updateNotifyButton_();
-  // first poll after initial load
-  pollAdminAlerts_();
-  setInterval(pollAdminAlerts_, POLL_MS);
-}
-
-function wireNotifyButton_(){
-  const btn = qs('#btnNotify');
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
-    if (!('Notification' in window)){
-      alert('Notifications not supported.');
-      return;
-    }
-    if (Notification.permission === 'granted'){
-      setNotifyEnabled_(!isNotifyEnabled_());
-      updateNotifyButton_();
-      return;
-    }
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted'){
-      setNotifyEnabled_(true);
-    }
-    updateNotifyButton_();
-  });
-}
 
 function getAppPagesBaseUrl(){
   try {
@@ -151,7 +51,7 @@ function buildResetTemplate(u){
     `Voici votre code de réinitialisation LearnHub : ${code}`,
     link ? `Page: ${link}` : '',
     ``,
-    `Ce code expire dans 30 minutes. Si vous n’avez pas demandé cela, ignorez ce message.`,
+    `Ce code expire dans 1 heure. Si vous n’avez pas demandé cela, ignorez ce message.`,
     ``,
     `— Admin LearnHub`
   ].filter(Boolean).join('\n');
@@ -352,12 +252,10 @@ async function init(){
   });
 
   // Notifications (manual polling)
-  wireNotifyButton_();
   // Enable by default if permission already granted
   if (('Notification' in window) && Notification.permission === 'granted' && localStorage.getItem(LS_NOTIFY_ENABLED) === null){
     setNotifyEnabled_(true);
   }
-  startAlertsPolling_();
 
   // Create user form (existing UI)
   const form = qs('#createUserForm');

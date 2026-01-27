@@ -89,7 +89,54 @@
       </div>
     </div>
 
-    <script src="../../assets/vendor/libs/jquery/jquery.js"></script>
+    
+    <!-- Puzzle modal (shown after successful registration) -->
+    <div class="modal fade" id="puzzleModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" data-i18n="auth.puzzle.title">Activation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info mb-3" id="puzzleIntro" data-i18n="auth.puzzle.intro">
+              Solve the puzzle to reveal your activation code.
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold" id="puzzleQuestion"></div>
+              <span class="badge bg-label-primary" id="puzzleAttempts"></span>
+            </div>
+
+            <input id="puzzleAnswer" type="text" class="form-control" placeholder="..." autocomplete="off" />
+
+            
+            <div class="mt-2 small text-muted"><span id="puzzleSolution" class="lh-hidden-answer ms-1" tabindex="0"></span>
+            </div>
+<div class="alert alert-danger mt-3 d-none" id="puzzleError"></div>
+
+            <div class="alert alert-success mt-3 d-none" id="puzzleReveal">
+              <div class="mb-1" data-i18n="auth.puzzle.revealLabel">Your activation code:</div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold fs-5" id="puzzleCode"></span>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnCopyCode" data-i18n="common.copy">Copy</button>
+              </div>
+            </div>
+
+            <div class="alert alert-warning mt-3 d-none" id="puzzleLocked" data-i18n="auth.puzzle.locked">
+              Too many attempts. Please contact the admin to get your code.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="common.later">Later</button>
+            <button type="button" class="btn btn-primary" id="btnPuzzleCheck" data-i18n="auth.puzzle.check">Check</button>
+            <button type="button" class="btn btn-success d-none" id="btnGoVerify" data-i18n="auth.puzzle.continue">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<script src="../../assets/vendor/libs/jquery/jquery.js"></script>
     <script src="../../assets/vendor/libs/popper/popper.js"></script>
     <script src="../../assets/vendor/js/bootstrap.js"></script>
     <script src="../../assets/vendor/js/menu.js"></script>

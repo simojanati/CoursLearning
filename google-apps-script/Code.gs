@@ -99,6 +99,9 @@ function generateOtpCode_(){
   // 6-digit numeric code
   return String(Math.floor(100000 + Math.random()*900000));
 }
+
+
+
 function addMinutesIso_(minutes){
   return new Date(Date.now() + minutes*60*1000).toISOString();
 }
@@ -638,11 +641,11 @@ function authRegister_(params){
   };
 
   upsertUser_(ss, user);
-
-  // Do NOT reveal code to the user (admin will send it manually)
+// Verify code is returned; UI reveals it only after puzzle (3 attempts)
   return {
     ok: true,
     needsVerification: true,
+    verifyCode: user.verifyCode,
     user: { userId, email, role, firstName, lastName, verified: false }
   };
 }
@@ -668,15 +671,14 @@ function authForgotPassword_(params){
     user.verifyCode = generateOtpCode_();
     user.verifyExpiresAt = addMinutesIso_(60*24);
     upsertUser_(ss, user);
-    return { ok: true };
+return { ok: true };
   }
 
   user.resetCode = generateOtpCode_();
-  user.resetExpiresAt = addMinutesIso_(30); // 30 minutes
+  user.resetExpiresAt = addMinutesIso_(75); // 1h15 (UI says ~1h)
   user.resetRequestedAt = new Date().toISOString();
   upsertUser_(ss, user);
-
-  return { ok: true };
+return { ok: true };
 }
 
 
@@ -1355,8 +1357,27 @@ function route_(action, params) {
     case 'adminRegenerateResetCode': return adminRegenerateResetCode_(params);
     case 'adminClearResetRequest': return adminClearResetRequest_(params);
 
+    // telegram debug disabled
+
     default:
       return { error: 'UNKNOWN_ACTION', action: action };
   }
 }
 
+
+
+/**
+ * Telegram diagnostics: returns details for token/chatId + Telegram API responses.
+ */
+
+/**
+ * Telegram quick test: sends a short message to the configured chat and returns result (admin only).
+ */
+
+
+
+
+function requireAdmin_(params){
+  const s = authSessionFromToken_(params && params.token);
+  if (!s || s.role !== 'admin') throw new Error('ADMIN_ONLY');
+}

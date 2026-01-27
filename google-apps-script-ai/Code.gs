@@ -245,3 +245,8 @@ function authorizeMail_(){
   MailApp.getRemainingDailyQuota();
   return true;
 }
+
+function telegramTest_() {
+  notifyTelegram_('✅ <b>LearnHub</b> Telegram test message.');
+  return { ok: true, sent: true, at: new Date().toISOString() };
+}
