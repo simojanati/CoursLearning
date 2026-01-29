@@ -442,7 +442,7 @@ function clearChat(){
 /* ---------------- Page init ---------------- */
 (async function(){
   requireAuth({ roles: ['student','admin'] });
-  await ensureTopbar({ showSearch: false });
+  await ensureTopbar({ showSearch: true, searchPlaceholderKey: 'courses.searchPlaceholder' });
   await initI18n();
 
   const u = getUser();
