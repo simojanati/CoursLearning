@@ -608,3 +608,27 @@ html[data-lh-theme="dark"] .landing-nav{
   color: #111;
   background: rgba(105,108,255,.18);
 }
+
+/* Quiz RTL fix */
+/* Ensure radio inputs align on the RIGHT side for Arabic (RTL) quizzes */
+html[dir="rtl"] .form-check{
+  display: flex;
+  flex-direction: row;          /* keep DOM order: input then label */
+  direction: rtl;               /* make the flex start on the right */
+  justify-content: flex-start;  /* start (right) */
+  align-items: flex-start;
+  gap: .5rem;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+html[dir="rtl"] .form-check .form-check-input{
+  float: none !important;
+  margin: .25rem 0 0 .5rem !important; /* space between input (right) and label (left) */
+}
+
+html[dir="rtl"] .form-check .form-check-label{
+  text-align: right;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

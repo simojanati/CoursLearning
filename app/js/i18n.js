@@ -4,7 +4,7 @@ import { I18N_DICT } from './i18n-dict.js';
 import { fetchPlatformSettings } from './api.js';
 
 let currentLang = DEFAULT_LANG; // UI language
-let contentLang = DEFAULT_LANG; // Data language (FR/EN only)
+let contentLang = DEFAULT_LANG; // Data/content language (FR/EN/AR)
 
 export function getCurrentLang(){ return currentLang; }
 export function getCurrentContentLang(){ return contentLang; }
@@ -18,12 +18,12 @@ export function initI18n(){
   currentLang = getLang(DEFAULT_LANG);
   if (!SUPPORTED_LANGS.includes(currentLang)) currentLang = DEFAULT_LANG;
 
-  // Data/content language: only FR/EN exist in sheets content.
-  // If UI is FR/EN -> content follows UI. If UI is AR -> keep last saved FR/EN.
+  // Data/content language: follow UI language when available.
+  // Fallback behavior remains safe because pickField() falls back to FR/EN/base if *_ar is missing.
   const savedContent = getContentLang(DEFAULT_LANG);
-  contentLang = (currentLang === 'fr' || currentLang === 'en')
+  contentLang = SUPPORTED_LANGS.includes(currentLang)
     ? currentLang
-    : (savedContent === 'en' ? 'en' : 'fr');
+    : (SUPPORTED_LANGS.includes(savedContent) ? savedContent : DEFAULT_LANG);
   setContentLang(contentLang);
 
   applyLangToDocument();
@@ -55,16 +55,9 @@ export function setLanguage(lang){
   currentLang = next;
   setLang(next);
 
-  // Content language behavior:
-  // - If user selects FR/EN: content switches to that language.
-  // - If user selects AR: content stays as last selected FR/EN.
-  if (next === 'fr' || next === 'en'){
-    contentLang = next;
-    setContentLang(contentLang);
-  } else {
-    const savedContent = getContentLang(DEFAULT_LANG);
-    contentLang = (savedContent === 'en' ? 'en' : 'fr');
-  }
+  // Content language follows UI language (FR/EN/AR).
+  contentLang = next;
+  setContentLang(contentLang);
 
   applyLangToDocument();
   translatePage();

@@ -36,17 +36,24 @@ async function loadNavData(force=false){
 }
 
 function dataLang(){
+  // Content language follows the current UI language (fr/en/ar).
   const l = document.documentElement.lang || 'fr';
-  return (l === 'ar') ? 'fr' : l; // content is FR/EN only
+  return (l === 'ar' || l === 'en' || l === 'fr') ? l : 'fr';
 }
 function getField(obj, base){
   const lang = dataLang();
   const key = `${base}_${lang}`;
-  return (obj && obj[key] != null && obj[key] !== '') ? obj[key] : (obj && obj[base] ? obj[base] : '');
+  if (obj && obj[key] != null && obj[key] !== '') return obj[key];
+  // Prefer FR as canonical fallback, then EN, then raw base
+  const frKey = `${base}_fr`;
+  const enKey = `${base}_en`;
+  if (obj && obj[frKey] != null && obj[frKey] !== '') return obj[frKey];
+  if (obj && obj[enKey] != null && obj[enKey] !== '') return obj[enKey];
+  return (obj && obj[base] != null) ? obj[base] : '';
 }
 function getChoices(q){
   const lang = dataLang();
-  const v = q[`choices_${lang}`] || q.choices || [];
+  const v = q[`choices_${lang}`] || q.choices || q['choices_fr'] || q['choices_en'] || [];
   if (Array.isArray(v)) return v;
   if (typeof v === 'string'){
     try {
