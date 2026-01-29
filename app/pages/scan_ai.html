@@ -135,6 +135,7 @@
               <div class="scan-frame bg-light rounded overflow-hidden position-relative">
                 <video id="scanVideo" autoplay playsinline muted class="scan-video"></video>
                 <img id="scanPreview" class="scan-preview d-none" alt="preview"/>
+                <canvas id="cropCanvas" class="scan-crop-canvas d-none"></canvas>
               </div>
               <canvas id="scanCanvas" class="d-none"></canvas>
             </div>
@@ -145,6 +146,20 @@
                 <button id="btnRetake" class="btn btn-outline-secondary" type="button" disabled><i class="bx bx-reset"></i> <span data-i18n="scan.retake">Retake</span></button>
                 <button id="btnOcr" class="btn btn-primary" type="button" disabled><i class="bx bx-search-alt"></i> <span data-i18n="scan.ocr">OCR</span></button>
                 <button id="btnClearScan" class="btn btn-outline-danger" type="button"><i class="bx bx-trash"></i> <span data-i18n="scan.clear">Clear</span></button>
+              </div>
+
+              <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+                <button id="btnApplyCrop" class="btn btn-outline-primary btn-sm" type="button" disabled><i class="bx bx-crop"></i> <span data-i18n="scan.crop">Crop</span></button>
+                <button id="btnResetCrop" class="btn btn-outline-secondary btn-sm" type="button" disabled><i class="bx bx-reset"></i> <span data-i18n="scan.cropReset">Reset crop</span></button>
+              </div>
+
+              <div class="mb-2">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="enhanceToggle" disabled>
+                  <label class="form-check-label" for="enhanceToggle" data-i18n="scan.enhance">Enhance</label>
+                </div>
+                <label class="form-label small mb-0 mt-1" data-i18n="scan.contrast">Contrast</label>
+                <input type="range" class="form-range" id="contrastRange" min="0.8" max="2.2" step="0.1" value="1.4" disabled>
               </div>
 <div class="mb-2">
                 <label class="form-label" data-i18n="scan.text">Extracted text</label>

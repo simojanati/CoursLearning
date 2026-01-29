@@ -98,10 +98,185 @@ function setBusy(on){
 /* ---------------- OCR (Tesseract.js) ---------------- */
 let stream = null;
 let lastImageDataUrl = '';
+let fullImageDataUrl = '';
+let workingImageDataUrl = '';
+let cropRect = null; // {x,y,w,h} in image pixels
+let cropImg = null;
+let cropListenersBound = false;
+let enhanceOn = false;
+let contrastValue = 1.4;
+
 
 function setOcrStatus(text){
   const el = qs('#ocrStatus');
   if (el) el.textContent = text || '';
+}
+
+function loadImageDataUrl(dataUrl){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=> resolve(img);
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+function clamp255(v){ return v < 0 ? 0 : (v > 255 ? 255 : v); }
+
+function applyEnhanceToCanvas_(ctx, w, h, contrast){
+  const imgData = ctx.getImageData(0,0,w,h);
+  const d = imgData.data;
+  const c = Number(contrast || 1.4);
+  for (let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    let y = 0.299*r + 0.587*g + 0.114*b;
+    y = (y - 128) * c + 128;
+    y = clamp255(y);
+    d[i]=d[i+1]=d[i+2]=y;
+  }
+  ctx.putImageData(imgData,0,0);
+}
+
+function setEditControlsEnabled(on){
+  qs('#btnApplyCrop') && (qs('#btnApplyCrop').disabled = !on);
+  qs('#btnResetCrop') && (qs('#btnResetCrop').disabled = !on);
+  qs('#enhanceToggle') && (qs('#enhanceToggle').disabled = !on);
+  qs('#contrastRange') && (qs('#contrastRange').disabled = !on);
+}
+
+function getPointOnCanvas_(canvas, clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  return { x, y };
+}
+
+function drawCropEditor_(){
+  const canvas = qs('#cropCanvas');
+  if (!canvas || !cropImg) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(cropImg,0,0);
+
+  if (enhanceOn){
+    applyEnhanceToCanvas_(ctx, canvas.width, canvas.height, contrastValue);
+  }
+
+  const r = cropRect || { x:0, y:0, w: canvas.width, h: canvas.height };
+  cropRect = r;
+
+  // dark overlay outside selection
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.rect(0,0,canvas.width,canvas.height);
+  ctx.rect(r.x,r.y,r.w,r.h);
+  ctx.fill('evenodd');
+  ctx.restore();
+
+  // border
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = Math.max(2, Math.round(canvas.width/400));
+  ctx.strokeRect(r.x,r.y,r.w,r.h);
+  ctx.restore();
+}
+
+async function showCropEditor(){
+  const canvas = qs('#cropCanvas');
+  const preview = qs('#scanPreview');
+  if (!canvas || !workingImageDataUrl) return;
+
+  cropImg = await loadImageDataUrl(workingImageDataUrl);
+  canvas.width = cropImg.naturalWidth;
+  canvas.height = cropImg.naturalHeight;
+
+  // default selection = full image
+  cropRect = cropRect || { x:0, y:0, w: canvas.width, h: canvas.height };
+
+  // show canvas editor, hide preview
+  preview && preview.classList.add('d-none');
+  canvas.classList.remove('d-none');
+  setEditControlsEnabled(true);
+  drawCropEditor_();
+
+  if (!cropListenersBound){
+    cropListenersBound = true;
+    let dragging=false;
+    let start=null;
+
+    const down = (ev)=>{
+      const p = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+      dragging = true;
+      start = getPointOnCanvas_(canvas, p.clientX, p.clientY);
+      ev.preventDefault();
+    };
+    const move = (ev)=>{
+      if (!dragging || !start) return;
+      const p = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+      const cur = getPointOnCanvas_(canvas, p.clientX, p.clientY);
+      let x = Math.min(start.x, cur.x);
+      let y = Math.min(start.y, cur.y);
+      let w = Math.abs(cur.x - start.x);
+      let h = Math.abs(cur.y - start.y);
+      const min = 40;
+      if (w < min) w = min;
+      if (h < min) h = min;
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+      if (x + w > canvas.width) w = canvas.width - x;
+      if (y + h > canvas.height) h = canvas.height - y;
+      cropRect = { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
+      drawCropEditor_();
+      ev.preventDefault();
+    };
+    const up = ()=>{ dragging=false; start=null; };
+
+    canvas.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+
+    canvas.addEventListener('touchstart', down, { passive:false });
+    window.addEventListener('touchmove', move, { passive:false });
+    window.addEventListener('touchend', up);
+  }
+}
+
+async function applyCrop(){
+  if (!workingImageDataUrl || !cropRect) return;
+  const img = await loadImageDataUrl(workingImageDataUrl);
+  const c = document.createElement('canvas');
+  c.width = cropRect.w;
+  c.height = cropRect.h;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
+  workingImageDataUrl = c.toDataURL('image/png');
+  cropRect = null;
+  await showCropEditor();
+  qs('#btnOcr') && (qs('#btnOcr').disabled = false);
+  setOcrStatus(t('scan.cropped'));
+}
+
+async function resetCrop(){
+  if (!fullImageDataUrl) return;
+  workingImageDataUrl = fullImageDataUrl;
+  cropRect = null;
+  await showCropEditor();
+  setOcrStatus(t('scan.cropResetDone'));
+}
+
+async function getProcessedDataUrl(){
+  const base = workingImageDataUrl || lastImageDataUrl;
+  if (!base) return '';
+  const img = await loadImageDataUrl(base);
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img,0,0);
+  if (enhanceOn){
+    applyEnhanceToCanvas_(ctx, c.width, c.height, contrastValue);
+  }
+  return c.toDataURL('image/png');
 }
 
 function uiToTessLang(uiLang){
@@ -131,7 +306,7 @@ async function startCamera(){
   }
 }
 
-function captureFrame(){
+async function captureFrame(){
   const video = qs('#scanVideo');
   const canvas = qs('#scanCanvas');
   const preview = qs('#scanPreview');
@@ -143,9 +318,16 @@ function captureFrame(){
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, w, h);
   lastImageDataUrl = canvas.toDataURL('image/png');
+  fullImageDataUrl = lastImageDataUrl;
+  workingImageDataUrl = lastImageDataUrl;
+  cropRect = null;
+  try{ await showCropEditor(); }catch{}
+  setEditControlsEnabled(true);
+
   if (preview){
-    preview.src = lastImageDataUrl;
-    preview.classList.remove('d-none');
+    preview.src = workingImageDataUrl || lastImageDataUrl;
+    // crop editor uses canvas; keep preview hidden
+    preview.classList.add('d-none');
   }
   const ocrBtn = qs('#btnOcr');
   if (ocrBtn) ocrBtn.disabled = !lastImageDataUrl;
@@ -169,7 +351,8 @@ async function runOcr(){
 
   try{
     // Tesseract is loaded globally (UMD)
-    const res = await window.Tesseract.recognize(lastImageDataUrl, tessLang, {
+    const imgDataUrl = await getProcessedDataUrl();
+    const res = await window.Tesseract.recognize(imgDataUrl, tessLang, {
       logger: m => {
         if (m && m.status){
           const p = (m.progress != null) ? Math.round(m.progress * 100) : null;
@@ -211,8 +394,17 @@ function pasteToAi(){
 }
 
 function retake(){
+  const cropCanvas = qs('#cropCanvas');
+  if (cropCanvas) cropCanvas.classList.add('d-none');
+
   const preview = qs('#scanPreview');
   lastImageDataUrl = '';
+  fullImageDataUrl = '';
+  workingImageDataUrl = '';
+  cropRect = null;
+  cropImg = null;
+  setEditControlsEnabled(false);
+
   if (preview){ preview.src=''; preview.classList.add('d-none'); }
   const ocrBtn = qs('#btnOcr');
   if (ocrBtn) ocrBtn.disabled = true;
@@ -225,6 +417,12 @@ function clearScan(){
   const out = qs('#ocrText');
   const preview = qs('#scanPreview');
   lastImageDataUrl = '';
+  fullImageDataUrl = '';
+  workingImageDataUrl = '';
+  cropRect = null;
+  cropImg = null;
+  setEditControlsEnabled(false);
+
   if (out) out.value = '';
   if (preview){ preview.src=''; preview.classList.add('d-none'); }
   const ocrBtn = qs('#btnOcr');
