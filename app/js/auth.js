@@ -55,6 +55,18 @@ export function setUser(user){
   } catch {}
 }
 
+export async function refreshUser(){
+  try{
+    const res = await authMe();
+    if (res && res.ok && res.user){
+      setUser(res.user);
+      try { window.dispatchEvent(new CustomEvent('lh:userUpdated', { detail: res.user })); } catch {}
+      return res.user;
+    }
+  }catch{}
+  return getUser();
+}
+
 export function isAuthenticated(){
   const t = getToken();
   if (!t) return false;
@@ -147,5 +159,8 @@ export function requireAuth({ roles = ['student','admin'], redirectTo = 'login.h
 
   // Remember last visited in-app page for "normal" logins
   try { localStorage.setItem('lh_lastPage', returnTo); } catch {}
+
+  // Refresh user from backend (non-blocking) to pick up new flags like scanAccess
+  try { refreshUser(); } catch {}
   return getUser();
 }

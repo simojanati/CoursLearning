@@ -24,7 +24,7 @@
       } catch (e) {}
     })();
   </script>
-<title>Quiz | LearnHub</title>
+<title>Scan & AI - LearnHub</title>
     <link rel="icon" type="image/x-icon" href="../../assets/img/favicon/favicon.ico" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,9 +43,10 @@
     <script src="../../assets/js/config.js"></script>
   </head>
 
-  <body data-i18n-title="page.quiz">
+  <body data-i18n-title="page.courses">
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
+        <!-- Menu -->
         <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
           <div class="app-brand demo">
             <a href="home.html" class="app-brand-link">
@@ -71,7 +72,7 @@
             <li class="menu-item">
               <a href="courses.html" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-book"></i>
-                <div data-i18n="menu.courses">Courses</div>
+                <div data-i18n="menu.courses" data-i18n="courses.title">Courses</div>
               </a>
             </li>
 
@@ -114,45 +115,108 @@
 
           </ul>
         </aside>
+        <!-- / Menu -->
 
         <div class="layout-page">
           <div id="lhTopbar"></div>
 
           <div class="content-wrapper">
             <div class="container-xxl flex-grow-1 container-p-y">
-              <div id="quizResult" class="alert d-none" role="alert">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <div class="fw-semibold" id="quizResultText" data-i18n="quiz.result">Result</div>
-                    <small class="text-muted d-block"><span data-i18n="quiz.scoreLabel">Score:</span> <span id="quizScore">0%</span></small>
-                    <small class="text-muted" id="quizPassing"></small>
-                  </div>
-                  <a class="btn btn-sm btn-outline-dark" href="#" onclick="location.reload(); return false;"><span data-i18n="quiz.retry">Retry</span></a>
-                </div>
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0" data-i18n="scan.title">Scan</h5>
+          <span class="badge bg-label-primary">OCR</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12 col-lg-7">
+              <div class="ratio ratio-16x9 bg-light rounded overflow-hidden">
+                <video id="scanVideo" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
               </div>
-
-              <div class="card mb-3">
-                <div class="card-body">
-  <nav aria-label="breadcrumb" class="mb-2" id="breadcrumbs" style="display:none;">
-    <ol class="breadcrumb mb-0" id="breadcrumbList"></ol>
-  </nav>
-
-  <div class="d-flex justify-content-end mb-2">
-    <a class="btn btn-sm btn-outline-primary" id="backToLessonBtn" href="javascript:history.back()"><i class="bx bx-left-arrow-alt"></i> <span data-i18n="quiz.back">Back</span></a>
-  </div>
-
-                  <h4 class="mb-1" id="quizTitle">Quiz</h4>
-                  <p class="mb-0 text-muted" data-i18n="quiz.instructions">Choose the best answer. Explanations will appear after submitting.</p>
-                </div>
-              </div>
-
-              <div id="quizEmpty"></div>
-              <div id="quizQuestions"></div>
-
-              <div class="d-flex justify-content-end">
-                <button id="submitQuiz" class="btn btn-primary"><i class="bx bx-check"></i> <span data-i18n="quiz.submit">Submit</span></button>
-              </div>
+              <canvas id="scanCanvas" class="d-none"></canvas>
+              <img id="scanPreview" class="img-fluid rounded mt-2 d-none" alt="preview"/>
             </div>
+            <div class="col-12 col-lg-5">
+              <div class="d-flex gap-2 flex-wrap mb-2">
+                <button id="btnStartCam" class="btn btn-outline-primary" type="button"><i class="bx bx-camera"></i> <span data-i18n="scan.start">Start camera</span></button>
+                <button id="btnCapture" class="btn btn-outline-secondary" type="button" disabled><i class="bx bx-crop"></i> <span data-i18n="scan.capture">Capture</span></button>
+                <button id="btnOcr" class="btn btn-primary" type="button" disabled><i class="bx bx-search-alt"></i> <span data-i18n="scan.ocr">OCR</span></button>
+                <button id="btnClearScan" class="btn btn-outline-danger" type="button"><i class="bx bx-trash"></i> <span data-i18n="scan.clear">Clear</span></button>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label" data-i18n="scan.lang">OCR language</label>
+                <select id="ocrLang" class="form-select form-select-sm" style="max-width:240px">
+                  <option value="auto" data-i18n="scan.lang.auto">Auto (UI)</option>
+                  <option value="eng">English</option>
+                  <option value="fra">Français</option>
+                  <option value="ara">العربية</option>
+                </select>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label" data-i18n="scan.text">Extracted text</label>
+                <textarea id="ocrText" class="form-control" rows="8" placeholder=""></textarea>
+              </div>
+
+              <div class="d-flex gap-2 flex-wrap">
+                <button id="btnCopyText" class="btn btn-outline-secondary" type="button"><i class="bx bx-copy"></i> <span data-i18n="scan.copy">Copy</span></button>
+                <button id="btnPasteToAi" class="btn btn-outline-primary" type="button"><i class="bx bx-paste"></i> <span data-i18n="scan.paste">Paste to AI</span></button>
+              </div>
+
+              <div class="text-muted small mt-2" id="ocrStatus"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0" data-i18n="menu.scanAi">Scan &amp; AI</h5>
+          <span class="badge bg-label-primary">AI</span>
+        </div>
+        <div class="card-body">
+          <div class="ai-chat">
+            <div class="ai-chat-toolbar">
+              <label class="form-label mb-0 me-1" data-i18n="ai.mode">Mode</label>
+              <select id="aiMode" class="form-select form-select-sm" style="max-width:180px">
+                <option value="explain" data-i18n="ai.mode.explain">Expliquer</option>
+                <option value="examples" data-i18n="ai.mode.examples">Exemples</option>
+                <option value="exercises" data-i18n="ai.mode.exercises">Exercices</option>
+                <option value="quiz" data-i18n="ai.mode.quiz">Mini-quiz</option>
+                <option value="review" data-i18n="ai.mode.review">Correction</option>
+                <option value="open" data-i18n="ai.mode.open">Open</option>
+              </select>
+
+              <label class="form-label mb-0 ms-3 me-1" data-i18n="ai.replyStyle">Reply</label>
+              <select id="aiReplyStyle" class="form-select form-select-sm" style="max-width:220px">
+                <option value="auto" data-i18n="ai.reply.auto">Auto</option>
+                <option value="ar_fusha" data-i18n="ai.reply.fusha">Arabic (Fusha)</option>
+                <option value="darija" data-i18n="ai.reply.darija">Darija</option>
+                <option value="fr" data-i18n="ai.reply.fr">French</option>
+                <option value="en" data-i18n="ai.reply.en">English</option>
+              </select>
+            </div>
+
+            <div id="aiMessages" class="ai-chat-messages"></div>
+
+            <div class="d-flex gap-2 align-items-start flex-wrap">
+              <textarea id="aiInput" class="form-control" rows="3" placeholder=""></textarea>
+              <button id="aiSendBtn" class="btn btn-primary" type="button">
+                <i class="bx bx-send"></i> <span data-i18n="ai.send">Envoyer</span>
+              </button>
+            </div>
+            <div class="text-muted small" id="aiHint"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
             <footer class="content-footer footer bg-footer-theme">
               <div class="container-xxl py-2 text-center">
@@ -174,6 +238,7 @@
     <script src="../../assets/vendor/js/menu.js"></script>
     <script src="../../assets/js/main.js"></script>
 
-    <script type="module" src="../js/quiz.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script type="module" src="../js/scan_ai.js"></script>
   </body>
 </html>

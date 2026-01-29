@@ -202,7 +202,11 @@ function requireAuth_(ss, params){
   const user = findUserByEmail_(ss, String(payload.email||''));
   if (!user) return { error:'INVALID_TOKEN' };
   const role = String(user.role || payload.role || 'student');
-  return { ok:true, user: { userId:String(user.userId), email:String(user.email), role, firstName:user.firstName||'', lastName:user.lastName||'', verified:String(user.verified||'')==='true' || user.verified===true }, role };
+  const scanAccess = (function(u){
+    const v = (u && u.scanAccess != null) ? u.scanAccess : '';
+    return v === true || String(v).toLowerCase() === 'true' || String(v) === '1' || String(v).toLowerCase() === 'yes';
+  })(user);
+  return { ok:true, user: { userId:String(user.userId), email:String(user.email), role, firstName:user.firstName||'', lastName:user.lastName||'', scanAccess: scanAccess, verified:String(user.verified||'')==='true' || user.verified===true }, role };
 }
 
 function issueTokenForUser_(user){
@@ -569,7 +573,11 @@ function authVerifyCode_(params){
   upsertUser_(ss, user);
 
   const jwt = issueTokenForUser_(user);
-  return { token: jwt, user: { userId: String(user.userId), email: String(user.email), role: String(user.role||'student'), firstName: user.firstName||'', lastName: user.lastName||'', verified:true } };
+  const scanAccess = (function(u){
+    const v = (u && u.scanAccess != null) ? u.scanAccess : '';
+    return v === true || String(v).toLowerCase() === 'true' || String(v) === '1' || String(v).toLowerCase() === 'yes';
+  })(user);
+  return { token: jwt, user: { userId: String(user.userId), email: String(user.email), role: String(user.role||'student'), firstName: user.firstName||'', lastName: user.lastName||'', scanAccess: scanAccess, verified:true } };
 }
 
 
@@ -596,8 +604,13 @@ function authLogin_(params){
   const verified = String(user.verified||'') === 'true' || user.verified === true;
   if (!verified) return { error: 'EMAIL_NOT_VERIFIED' };
 
+
+  const scanAccess = (function(u){
+    const v = (u && u.scanAccess != null) ? u.scanAccess : '';
+    return v === true || String(v).toLowerCase() === 'true' || String(v) === '1' || String(v).toLowerCase() === 'yes';
+  })(user);
   const jwt = issueTokenForUser_(user);
-  return { token: jwt, user: { userId: String(user.userId), email, role: String(user.role||'student'), firstName: user.firstName||'', lastName: user.lastName||'', verified:true } };
+  return { token: jwt, user: { userId: String(user.userId), email, role: String(user.role||'student'), firstName: user.firstName||'', lastName: user.lastName||'', scanAccess: scanAccess, verified:true } };
 }
 
 // Self-service registration (manual verification code displayed to admin in Users page)

@@ -1,4 +1,4 @@
-import { hasRole } from './auth.js';
+import { hasRole, getUser } from './auth.js';
 import { adminAlerts } from './api.js';
 
 // Admin menu visibility (UI only). Real security is enforced in backend.
@@ -7,11 +7,23 @@ export function isAdminMode(){
   return hasRole('admin');
 }
 
+
+export function canAccessScanAI(){
+  const u = getUser();
+  const sa = (u && (u.scanAccess === true || String(u.scanAccess||'').toLowerCase() === 'true' || String(u.scanAccess||'') === '1' || String(u.scanAccess||'').toLowerCase() === 'yes'));
+  return hasRole('admin') || sa;
+}
+
 export function applyAdminMode(){
   const on = isAdminMode();
   document.body.classList.toggle('admin-mode', on);
   document.querySelectorAll('[data-admin-only]').forEach(el => {
     el.classList.toggle('d-none', !on);
+  });
+
+  const scanOn = canAccessScanAI();
+  document.querySelectorAll('[data-scan-access-only]').forEach(el => {
+    el.classList.toggle('d-none', !scanOn);
   });
 }
 
@@ -55,3 +67,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   applyAdminMode();
   initAdminAlerts();
 });
+
+
+// Re-apply when user profile changes (e.g., scanAccess updated via authMe)
+try{
+  window.addEventListener('lh:userUpdated', () => applyAdminMode());
+} catch {}

@@ -264,19 +264,23 @@ export async function getHealth(){
 
 
 // AI assistant (via Apps Script)
-export async function aiChat({ lessonId, lang, mode, question, title, context, scope }){
+export async function aiChat({ lessonId, lang, mode, question, title, context, scope, replyStyle, script }){
   const q = String(question || '').trim();
   const m = String(mode || '').trim() || 'explain';
   const l = String(lang || '').trim() || 'fr';
   const t = String(title || '').trim();
   const c = String(context || '').trim();
-  const s = String(scope || '').trim(); // 'lesson'|'general'
+  const s = String(scope || '').trim(); // 'lesson'|'general'|'open'
+  const rs = String(replyStyle || '').trim(); // 'auto'|'ar_fusha'|'darija'|'fr'|'en'
+  const sc = String(script || '').trim(); // 'auto'|'arabic'|'latin'
   if (!q) throw new Error('Empty question');
   const url = buildAiUrl('aiChat', {
     lessonId: String(lessonId||''),
     lang: l,
     mode: m,
     scope: s,
+    replyStyle: rs,
+    script: sc,
     title: t,
     context: c,
     q: q
