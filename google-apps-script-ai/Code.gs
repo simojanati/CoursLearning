@@ -31,6 +31,24 @@
  * - callback=cb
  */
 
+const BUILD_AI_PROXY = 'ai-proxy-open-v3-2026-01-29';
+
+function fetchWithRetry429_(url, options){
+  for (let i=0;i<3;i++){
+    try{
+      return fetchWithRetry429_(url, options);
+    }catch(e){
+      const msg = String(e);
+      if (msg.indexOf('429') !== -1 && i < 2){
+        Utilities.sleep((i+1) * 1500);
+        continue;
+      }
+      throw e;
+    }
+  }
+  return UrlFetchApp.fetch(url, options);
+}
+
 function doGet(e){
   const p = (e && e.parameter) ? e.parameter : {};
   const cb = p.callback || '';
@@ -39,8 +57,10 @@ function doGet(e){
     const action = String(p.action || '');
     if(action === 'aiChat'){
       payload = aiChat_(p);
+    } else if(action === 'aiChatOpen'){
+      payload = aiChatOpen_(p);
     } else if(action === 'health'){
-      payload = { ok: true, provider: getProp_('AI_PROVIDER', 'gemini') };
+      payload = { ok: true, provider: getProp_('AI_PROVIDER', 'gemini'), build: BUILD_AI_PROXY };
     } else {
       payload = { error: 'Unknown action' };
     }
@@ -62,66 +82,120 @@ function output_(payload, callback){
 }
 
 function aiChat_(params){
-  const lang = (params.lang || 'fr').toString().trim();
-  const mode = (params.mode || 'explain').toString().trim();
-  const scope = (params.scope || 'lesson').toString().trim(); // lesson|general|open
-  const replyStyle = (params.replyStyle || 'auto').toString().trim(); // auto|ar_fusha|darija|fr|en
-  const script = (params.script || 'auto').toString().trim(); // auto|arabic|latin
-  const title = (params.title || '').toString().trim();
-  const context = (params.context || '').toString().trim();
-  const q = (params.q || '').toString().trim();
+  const lang = String(params.lang || 'fr').trim(); // UI lang (fr|en|ar)
+  const mode = String(params.mode || 'explain').trim() || 'explain';
+  const scope = String(params.scope || 'lesson').trim(); // lesson|general|open
+  const title = String(params.title || '').trim();
+  const context = String(params.context || '').trim();
+  const q = String(params.q || '').trim();
+
+  // Optional overrides
+  const replyStyleIn = String(params.replyStyle || 'auto').trim(); // auto|ar_fusha|darija|fr|en
+  const scriptIn = String(params.script || 'auto').trim(); // auto|arabic|latin
 
   if(!q) return { error: 'Missing q' };
 
-  const langRule = buildLangRule_(lang, replyStyle, script);
+  // Auto language/style detection when replyStyle is 'auto'
+  const detected = detectReplyStyleAuto_(q, lang);
+  const replyStyle = (replyStyleIn && replyStyleIn.toLowerCase() !== 'auto') ? replyStyleIn : detected.replyStyle;
+  const script = (scriptIn && scriptIn.toLowerCase() !== 'auto') ? scriptIn : detected.script;
 
-  const system = (scope === 'open')
-    ? ("You are a helpful assistant and tutor. You may answer ANY topic. " + langRule)
-    : (scope === 'general')
-      ? ("You are a helpful tutor. If lesson context is provided, use it as a reference, but you MAY answer broader questions too. If you go beyond the lesson, say so briefly. " + langRule)
-      : ("You are a helpful tutor. Answer ONLY using the provided lesson context. If the question is not covered by the lesson, say so and suggest what to review in the lesson. " + langRule);
-  const user = [
-    `Lang: ${lang}`,
-    `Mode: ${mode}`
-    `ReplyStyle: ${replyStyle}`
-    `Script: ${script}`,
-    `Scope: ${scope}`,
-    title ? `Lesson title: ${title}` : '',
-    context ? `Lesson context:\n${context}` : '',
-    `Student question:\n${q}`
-  ].filter(Boolean).join("\n\n");
+  const langRule = buildLangRule_(replyStyle, script, q);
 
+  const system =
+    (scope === 'open')
+      ? ("You are a helpful assistant. This is an OPEN chat: you may answer ANY topic. " + langRule)
+      : (scope === 'general')
+        ? ("You are a helpful tutor. If lesson context is provided, use it as a reference, but you MAY answer broader questions too. If you go beyond the lesson, say so briefly. " + langRule)
+        : ("You are a helpful tutor. Answer ONLY using the provided lesson context. If the question is not covered by the lesson, say so and suggest what to review in the lesson. " + langRule);
+
+  const user =
+    (scope === 'open')
+      ? `Mode: ${mode}
+Question:
+${q}`
+      : `Lang: ${lang}
+Mode: ${mode}
+Scope: ${scope}
+Title: ${title}
+
+Lesson Context:
+${context}
+
+Question:
+${q}`;
+
+  return callProvider_(system, user);
+}
+
+function aiChatOpen_(params){
+  // Dedicated action for Scan page: always OPEN, never lesson-limited
+  const p = params || {};
+  p.scope = 'open';
+  p.title = '';
+  p.context = '';
+  return aiChat_(p);
+}
+
+/**
+ * Decide reply style (fr/en/ar_fusha/darija) + script (arabic/latin) from question.
+ * - Arabic characters => arabic script
+ * - Arabizi/Darija latin heuristics => darija + latin
+ */
+function detectReplyStyleAuto_(q, uiLang){
+  const text = String(q || '');
+  const low = text.toLowerCase();
+
+  const arabCount = (text.match(/[\u0600-\u06FF]/g) || []).length;
+  const latinCount = (text.match(/[a-z]/gi) || []).length;
+  const script = (arabCount >= latinCount && arabCount > 0) ? 'arabic' : (latinCount > 0 ? 'latin' : (String(uiLang||'fr').toLowerCase()==='ar'?'arabic':'latin'));
+
+  // Arabic script => default to Fusha (user can force darija)
+  if (script === 'arabic') return { replyStyle: 'ar_fusha', script: 'arabic' };
+
+  // Darija latin / Arabizi heuristics
+  const hasArabiziDigits = /[2375689]/.test(low);
+  const darijaWords = ['wach','bghit','mzyan','kifach','chno','3lach','fash','fin','hadi','dakchi','kayn','kat','kaynin','kaynchi','bzaaf'];
+  if (hasArabiziDigits || darijaWords.some(w => low.includes(w))){
+    return { replyStyle: 'darija', script: 'latin' };
+  }
+
+  // English heuristics
+  const enWords = ['the ','what','how','why','when','where','please','can you','could you','explain','example','help'];
+  if (enWords.some(w => low.includes(w))){
+    return { replyStyle: 'en', script: 'latin' };
+  }
+
+  return { replyStyle: 'fr', script: 'latin' };
+}
+
+/**
+ * Language rule for the model.
+ */
+function buildLangRule_(replyStyle, script, q){
+  const rs = String(replyStyle || 'auto').toLowerCase();
+  const sc = String(script || 'auto').toLowerCase();
+
+  if (rs === 'fr') return "You MUST answer in French.";
+  if (rs === 'en') return "You MUST answer in English.";
+  if (rs === 'ar_fusha') return "You MUST answer in Modern Standard Arabic (فصحى) using Arabic script only.";
+  if (rs === 'darija'){
+    if (sc === 'latin') return "You MUST answer in Moroccan Darija written with Latin characters (Darija latin).";
+    return "You MUST answer in Moroccan Darija written with Arabic script.";
+  }
+
+  // Fallback: mirror the question script (Arabic vs Latin)
+  const hasArabic = (String(q||'').match(/[\u0600-\u06FF]/g) || []).length > 0;
+  if (hasArabic) return "You MUST answer using Arabic script, matching the user's language.";
+  return "You MUST answer using Latin characters, matching the user's language.";
+}
+
+function callProvider_(system, user){
   const provider = getProp_('AI_PROVIDER', 'gemini').toLowerCase();
-
   if(provider === 'gemini') return callGemini_(system, user);
   if(provider === 'groq') return callGroq_(system, user);
   if(provider === 'openai') return callOpenAI_(system, user);
-
   return { error: `Unsupported AI_PROVIDER: ${provider}` };
-}
-
-function buildLangRule_(uiLang, replyStyle, script){
-  // script: 'arabic'|'latin'|'auto'
-  // replyStyle: 'auto'|'ar_fusha'|'darija'|'fr'|'en'
-  const s = (script || 'auto').toLowerCase();
-  const rs = (replyStyle || 'auto').toLowerCase();
-
-  if (rs === 'fr') return "Answer in French.";
-  if (rs === 'en') return "Answer in English.";
-  if (rs === 'ar_fusha') return "Answer in Modern Standard Arabic (فصحى) using Arabic script only.";
-  if (rs === 'darija'){
-    if (s === 'latin') return "Answer in Moroccan Darija written with Latin characters (Darija latin).";
-    if (s === 'arabic') return "Answer in Moroccan Darija written with Arabic script.";
-    return "Answer in Moroccan Darija, keeping the same script as the student's question (Arabic vs Latin).";
-  }
-
-  // auto: match the student's question language + script
-  if (s === 'latin') return "Answer in the same language as the student's question, and keep Latin characters (do not switch to Arabic script).";
-  if (s === 'arabic') return "Answer in the same language as the student's question, and keep Arabic script (do not switch to Latin).";
-  // fallback to UI language if needed
-  if (String(uiLang||'').toLowerCase() === 'ar') return "Answer in Arabic (use Arabic script).";
-  if (String(uiLang||'').toLowerCase() === 'en') return "Answer in English.";
-  return "Answer in French.";
 }
 
 /* ------------------------- Providers ------------------------- */

@@ -31,7 +31,7 @@ export const BRAND = {
 
 // AI Proxy Apps Script Web App URL (separate deployment that is allowed to call external APIs)
 // Example: https://script.google.com/macros/s/AKfycb.../exec
-export const AI_API_BASE_URL = _ls("AI_API_BASE_URL", "https://script.google.com/macros/s/AKfycbx1snStnxyBdOaClJajmKTNcdV-uv3a7JJuwHLnPqzhbNzgkVIA1_PzKBghbtfi47_j/exec");
+export const AI_API_BASE_URL = _ls("AI_API_BASE_URL", "https://script.google.com/macros/s/AKfycbyFnGvwGY3QwkttFsSf-DrV3-AfrREOiBFyBZzb8xIRUQ6KpPKQ0vXeDysB0rOu_7hK/exec");
 
 // AI Assistant (optional)
 export const AI_ENABLED = true;

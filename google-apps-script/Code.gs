@@ -136,6 +136,7 @@ function ensureUsersSheet_(ss){
     'verified','verifiedAt',
     'verifyCode','verifyExpiresAt',
     'resetCode','resetExpiresAt','resetRequestedAt',
+    'scanAccess',
     'createdAt','updatedAt'
   ]);
 }
@@ -431,6 +432,7 @@ function route_(action, params) {
     'dataHealth': true,
     'adminUsersList': true,
     'adminUpdateUserRole': true,
+    'adminSetScanAccess': true,
     'adminCreateUser': true,
     'adminAlerts': true,
     'adminRegenerateVerifyCode': true,
@@ -845,6 +847,35 @@ function adminUpdateUserRole_(params){
   upsertUser_(ss, user);
   return { ok:true };
 }
+
+function adminSetScanAccess_(params){
+  const ss = getSpreadsheet_(params);
+  const email = String(params.email || '').trim().toLowerCase();
+
+  let user = null;
+  if (email) user = findUserByEmail_(ss, email);
+  if (!user && params.userId){
+    const sh = ensureUsersSheet_(ss);
+    const values = sh.getDataRange().getValues();
+    const headers = values.shift().map(String);
+    const idxId = headers.indexOf('userId');
+    for (let r=0;r<values.length;r++){
+      if (String(values[r][idxId]||'') === String(params.userId)){
+        user = {};
+        headers.forEach((h,i)=> user[h]=values[r][i]);
+        break;
+      }
+    }
+  }
+  if (!user) return { error:'USER_NOT_FOUND' };
+
+  const v = params.scanAccess;
+  const on = (v === true) || (String(v||'').toLowerCase() === 'true') || (String(v||'') === '1') || (String(v||'').toLowerCase() === 'yes');
+  user.scanAccess = on ? 'true' : 'false';
+  upsertUser_(ss, user);
+  return { ok:true, scanAccess: user.scanAccess };
+}
+
 
 function adminCreateUser_(params){
   const ss = getSpreadsheet_(params);
@@ -1321,6 +1352,7 @@ function route_(action, params) {
     'dataHealth': true,
     'adminUsersList': true,
     'adminUpdateUserRole': true,
+    'adminSetScanAccess': true,
     'adminCreateUser': true,
     'adminAlerts': true,
     'adminRegenerateVerifyCode': true,

@@ -3,7 +3,7 @@ import { ensureTopbar } from './layout.js';
 import { initI18n, t } from './i18n.js';
 import { requireAuth } from './auth.js';
 import { qs, escapeHTML, renderEmpty } from './ui.js';
-import { adminListUsers, adminUpdateUserRole, adminCreateUser, adminRegenerateVerifyCode, adminRegenerateResetCode, adminClearResetRequest, adminAlerts } from './api.js';
+import { adminListUsers, adminUpdateUserRole, adminSetScanAccess, adminCreateUser, adminRegenerateVerifyCode, adminRegenerateResetCode, adminClearResetRequest, adminAlerts } from './api.js';
 
 function tOr(key, fallback){ const v = t(key); return (v === key) ? fallback : v; }
 
@@ -124,6 +124,7 @@ function renderUsers(users){
     const email = escapeHTML(u.email||'');
     const name = escapeHTML(((u.firstName||'') + ' ' + (u.lastName||'')).trim());
     const role = escapeHTML(u.role||'student');
+    const scanOn = (u.scanAccess === true) || (String(u.scanAccess||'').toLowerCase() === 'true') || (String(u.scanAccess||'') === '1') || (String(u.scanAccess||'').toLowerCase() === 'yes');
     const verified = (String(u.verified||'') === 'true' || u.verified === true);
 
     const hasVerify = !!u._hasVerifyPending;
@@ -169,6 +170,11 @@ function renderUsers(users){
           </select>
         </td>
         <td>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" data-act="scan" data-email="${email}" ${scanOn?'checked':''}>
+          </div>
+        </td>
+        <td>
           ${verified ? '<span class="badge bg-success">OK</span>' : '<span class="badge bg-secondary">NO</span>'}
         </td>
         <td class="text-nowrap">
@@ -187,6 +193,15 @@ function renderUsers(users){
       await adminUpdateUserRole({ email, role });
     });
   });
+
+  tbody.querySelectorAll('input[data-act="scan"]').forEach(chk => {
+    chk.addEventListener('change', async (e)=>{
+      const email = e.target.getAttribute('data-email');
+      const scanAccess = !!e.target.checked;
+      await adminSetScanAccess({ email, scanAccess });
+    });
+  });
+
 
   tbody.querySelectorAll('button[data-act]').forEach(btn => {
     btn.addEventListener('click', async ()=>{

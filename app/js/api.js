@@ -287,6 +287,10 @@ export async function aiChat({ lessonId, lang, mode, question, title, context, s
   });
   const data = await jsonpUrl(url);
   if (data && data.error){
+    // FALLBACK_TO_AICHAT: if AI proxy is not yet redeployed with aiChatOpen, fallback to aiChat(scope=open)
+    if (String(data.error).toLowerCase().includes('unknown action')){
+      return await aiChat({ lessonId:'', lang:l, mode:m, question:q, title:'', context:'', scope:'open', replyStyle: rs, script: sc });
+    }
     const extra = data.message ? (': ' + String(data.message)) : '';
     _handleNotVerified_(data.error);
         throw new Error(String(data.error) + extra);
@@ -294,6 +298,40 @@ export async function aiChat({ lessonId, lang, mode, question, title, context, s
   return data;
 }
 
+
+export async function aiHealth(){
+  // Lightweight health endpoint on AI proxy (no auth required)
+  const url = buildAiUrl('health', {});
+  const data = await jsonpUrl(url);
+  return data;
+}
+
+export async function aiChatOpen({ lang, mode, question, replyStyle, script } = {}){
+  const q = String(question || '').trim();
+  const m = String(mode || '').trim() || 'open';
+  const l = String(lang || '').trim() || 'fr';
+  const rs = String(replyStyle || '').trim(); // auto|ar_fusha|darija|fr|en
+  const sc = String(script || '').trim(); // auto|arabic|latin
+  if (!q) throw new Error('Empty question');
+  const url = buildAiUrl('aiChatOpen', {
+    lang: l,
+    mode: m,
+    replyStyle: rs,
+    script: sc,
+    q: q
+  });
+  const data = await jsonpUrl(url);
+  if (data && data.error){
+    // FALLBACK_TO_AICHAT: if AI proxy is not yet redeployed with aiChatOpen, fallback to aiChat(scope=open)
+    if (String(data.error).toLowerCase().includes('unknown action')){
+      return await aiChat({ lessonId:'', lang:l, mode:m, question:q, title:'', context:'', scope:'open', replyStyle: rs, script: sc });
+    }
+    const extra = data.message ? (': ' + String(data.message)) : '';
+    _handleNotVerified_(data.error);
+    throw new Error(String(data.error) + extra);
+  }
+  return data;
+}
 
 // -------------------- Platform settings (optional) --------------------
 export function fetchPlatformSettings(lang = 'fr') {
@@ -383,6 +421,14 @@ export async function adminUpdateUserRole({ userId='', email='', role='' } = {})
   return data;
 }
 
+
+export async function adminSetScanAccess({ userId='', email='', scanAccess=false } = {}){
+  const params = {};
+  if (userId) params.userId = String(userId);
+  if (email) params.email = String(email);
+  params.scanAccess = !!scanAccess;
+  return await apiCall('adminSetScanAccess', params);
+}
 
 export async function adminCreateUser({ email='', password='', role='student', firstName='', lastName='' } = {}){
   const params = { email: String(email||''), password: String(password||''), role: String(role||'student') };
